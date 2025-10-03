@@ -1,0 +1,5 @@
+{
+  "name": "Generador de Contenido Inmobiliario",
+  "description": "Una herramienta para extraer activos, generar una publicación y crear una imagen de marketing para redes sociales a partir de la URL de un listado de propiedades.",
+  "requestFramePermissions": []
+}
