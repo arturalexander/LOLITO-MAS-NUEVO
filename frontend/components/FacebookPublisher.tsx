@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { PostService } from '../services/postService';
 import { uploadBase64Image } from '../services/imageUploadService';
-import { FacebookAuthButton } from './FacebookAuthButton';
+import { useAuth } from '../contexts/AuthContext';
 
 interface FacebookPublisherProps {
   socialPost: string;
   socialImageUrl: string | null;
   imageUrls: string[];
-  brandImage: string | null; // Ya viene de user.brandImageUrl
+  brandImage: string | null;
 }
 
 export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
@@ -16,24 +16,17 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
   imageUrls,
   brandImage
 }) => {
+  const { user } = useAuth();
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishResult, setPublishResult] = useState<any>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [uploadStatus, setUploadStatus] = useState<string>('');
 
-  const handleAuthSuccess = (userData: any) => {
-    setIsAuthenticated(true);
-    setPublishError(null);
-  };
-
-  const handleAuthError = (error: string) => {
-    setPublishError(`Error de autenticación: ${error}`);
-  };
+  const isConnected = !!(user?.pageName);
 
   const handlePublish = async () => {
-    if (!isAuthenticated) {
-      setPublishError('Debes conectar tu cuenta de Facebook primero');
+    if (!isConnected) {
+      setPublishError('Debes conectar tu cuenta de Facebook en Configuración primero');
       return;
     }
 
@@ -48,27 +41,20 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
     setUploadStatus('');
 
     try {
-      // Construir array de imágenes para el carrusel
-      const carouselImages = [
-        socialImageUrl,
-        ...imageUrls.slice(0, 3)
-      ];
+      const carouselImages = [socialImageUrl, ...imageUrls.slice(0, 3)];
 
-      // Si hay imagen de marca guardada en el perfil, subirla
       if (brandImage) {
         setUploadStatus('Subiendo imagen de marca...');
         try {
-          // Si es base64, subir a ImgBB
           if (brandImage.startsWith('data:')) {
             const brandImageUrl = await uploadBase64Image(brandImage);
             carouselImages.push(brandImageUrl);
           } else {
-            // Si ya es una URL, añadirla directamente
             carouselImages.push(brandImage);
           }
           setUploadStatus('Imagen de marca añadida. Publicando...');
         } catch (uploadError) {
-          throw new Error('Error al subir la imagen de marca. Verifica tu API key de ImgBB.');
+          throw new Error('Error al subir la imagen de marca.');
         }
       }
 
@@ -93,49 +79,55 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-800">Publicar en Facebook</h3>
-          <p className="text-sm text-slate-500">
-            {brandImage ? `Carrusel con ${imageUrls.length + 2} imágenes` : `Carrusel con ${imageUrls.length + 1} imágenes`}
-          </p>
+          {isConnected ? (
+            <p className="text-sm text-green-600">
+              ✅ Conectado: {user.pageName}
+              {user.instagramUsername && ` • @${user.instagramUsername}`}
+            </p>
+          ) : (
+            <p className="text-sm text-orange-600">
+              ⚠️ No conectado - Ve a Configuración
+            </p>
+          )}
         </div>
       </div>
 
-      <FacebookAuthButton 
-        onAuthSuccess={handleAuthSuccess}
-        onAuthError={handleAuthError}
-      />
-
-      {isAuthenticated && (
-        <button
-          onClick={handlePublish}
-          disabled={isPublishing || !socialPost || !socialImageUrl}
-          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed"
-        >
-          {isPublishing ? (
-            <div className="flex items-center justify-center space-x-2">
-              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              <span>{uploadStatus || 'Publicando carrusel...'}</span>
-            </div>
-          ) : (
-            'Publicar Carrusel en Facebook'
-          )}
-        </button>
-      )}
+      <button
+        onClick={handlePublish}
+        disabled={isPublishing || !socialPost || !socialImageUrl || !isConnected}
+        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+      >
+        {isPublishing ? (
+          <>
+            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span>{uploadStatus || 'Publicando...'}</span>
+          </>
+        ) : (
+          <>
+            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+            </svg>
+            <span>Publicar Carrusel en Facebook</span>
+          </>
+        )}
+      </button>
 
       {publishResult && (
         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
-          <p className="text-sm font-semibold text-green-800">¡Carrusel publicado exitosamente!</p>
+          <p className="text-sm font-semibold text-green-800">🎉 ¡Publicado exitosamente!</p>
           <p className="text-xs text-green-700 mt-1">
-            {brandImage ? `${imageUrls.length + 2} imágenes` : `${imageUrls.length + 1} imágenes`} publicadas
+            Tu carrusel está ahora en Facebook
           </p>
         </div>
       )}
 
       {publishError && (
         <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded">
-          <p className="text-sm text-red-700">{publishError}</p>
+          <p className="text-sm font-semibold text-red-800">Error</p>
+          <p className="text-sm text-red-700 mt-1">{publishError}</p>
         </div>
       )}
     </div>

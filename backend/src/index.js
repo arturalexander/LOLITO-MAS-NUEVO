@@ -6,7 +6,7 @@ require('dotenv').config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// CORS que acepta cualquier dominio de Vercel
+// ✅ CORS CORREGIDO
 app.use(cors({
   origin: function (origin, callback) {
     const allowedOrigins = [
@@ -15,19 +15,24 @@ app.use(cors({
       'https://auto-poster-flax.vercel.app'
     ];
     
-    if (!origin || 
-        allowedOrigins.includes(origin) || 
-        origin.endsWith('.vercel.app')) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+    // Permitir requests sin origin (como Postman) o dominios permitidos
+    if (!origin) {
+      return callback(null, true);
     }
+    
+    if (allowedOrigins.includes(origin) || origin.endsWith('.vercel.app')) {
+      return callback(null, true);
+    }
+    
+    // ✅ NO lanzar error, solo no permitir
+    return callback(null, false);
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+// ✅ Aumentar límite de payload para imágenes base64
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
@@ -47,6 +52,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/facebook', facebookAuthRoutes);
 app.use('/api/post', postRoutes);
 
+// Error handler
 app.use((err, req, res, next) => {
   console.error('Error:', err);
   res.status(err.status || 500).json({

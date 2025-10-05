@@ -1,10 +1,14 @@
-// frontend/components/BrandingSetup.tsx
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { FacebookAuthButton } from './FacebookAuthButton';
 
 const FONT_OPTIONS = ['Inter', 'Roboto', 'Lora', 'Poppins', 'Montserrat', 'Playfair Display'];
 
-export const BrandingSetup: React.FC = () => {
+interface BrandingSetupProps {
+  onComplete?: () => void;
+}
+
+export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
   const { user, updateBranding, logout } = useAuth();
   
   const [color1, setColor1] = useState(user?.brandColors.color1 || '#0077b6');
@@ -68,6 +72,15 @@ export const BrandingSetup: React.FC = () => {
     }
   };
 
+  const renderSummaryWithLineBreaks = (summaryText: string) => {
+    return summaryText.split(/<br\s*\/?>/i).map((line, index, arr) => (
+      <React.Fragment key={index}>
+        {line}
+        {index < arr.length - 1 && <br />}
+      </React.Fragment>
+    ));
+  };
+
   return (
     <div className="min-h-screen bg-slate-100 p-4">
       <div className="max-w-5xl mx-auto">
@@ -75,17 +88,27 @@ export const BrandingSetup: React.FC = () => {
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-6">
           <div className="flex justify-between items-center">
             <div>
-              <h1 className="text-3xl font-bold text-brand-dark">Configuración de Marca</h1>
+              <h1 className="text-3xl font-bold text-brand-dark">⚙️ Configuración</h1>
               <p className="text-slate-600 mt-1">
-                Configura tu identidad visual una sola vez
+                Configura tu identidad visual y conexiones
               </p>
             </div>
-            <button
-              onClick={logout}
-              className="text-slate-600 hover:text-red-600 font-medium transition-colors"
-            >
-              Cerrar Sesión
-            </button>
+            <div className="flex gap-3">
+              {onComplete && (
+                <button
+                  onClick={onComplete}
+                  className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  ← Volver
+                </button>
+              )}
+              <button
+                onClick={logout}
+                className="px-4 py-2 text-sm font-medium text-slate-600 hover:text-red-600 rounded-lg transition-colors"
+              >
+                Cerrar Sesión
+              </button>
+            </div>
           </div>
         </div>
 
@@ -98,104 +121,118 @@ export const BrandingSetup: React.FC = () => {
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Formulario */}
-          <div className="bg-white rounded-2xl shadow-lg p-6 space-y-6">
-            <h2 className="text-xl font-bold text-slate-800">Personalización</h2>
+          <div className="space-y-6">
+            {/* Marca Visual */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">🎨 Identidad Visual</h2>
 
-            {/* Colores */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
+              {/* Colores */}
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Color Principal
+                  </label>
+                  <input
+                    type="color"
+                    value={color1}
+                    onChange={(e) => setColor1(e.target.value)}
+                    className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-2">
+                    Color Secundario
+                  </label>
+                  <input
+                    type="color"
+                    value={color2}
+                    onChange={(e) => setColor2(e.target.value)}
+                    className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
+                  />
+                </div>
+              </div>
+
+              {/* Tipografía */}
+              <div className="mb-4">
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Color Principal
+                  Tipografía
+                </label>
+                <select
+                  value={font}
+                  onChange={(e) => setFont(e.target.value)}
+                  className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
+                >
+                  {FONT_OPTIONS.map((f) => (
+                    <option key={f} value={f}>{f}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Logo */}
+              <div className="mb-4">
+                <label className="block text-sm font-medium text-slate-700 mb-2">
+                  Logo de la Empresa
                 </label>
                 <input
-                  type="color"
-                  value={color1}
-                  onChange={(e) => setColor1(e.target.value)}
-                  className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleLogoUpload}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-blue file:text-white hover:file:bg-brand-dark transition"
                 />
+                {logoFile && (
+                  <img src={logoFile} alt="Logo preview" className="mt-3 max-h-16 rounded" />
+                )}
               </div>
+
+              {/* Imagen de Marca */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Color Secundario
+                  Imagen Final del Carrusel
                 </label>
+                <p className="text-xs text-slate-500 mb-2">
+                  Esta imagen se añadirá automáticamente al final de cada publicación
+                </p>
                 <input
-                  type="color"
-                  value={color2}
-                  onChange={(e) => setColor2(e.target.value)}
-                  className="w-full h-12 rounded-lg cursor-pointer border-2 border-slate-300"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleBrandImageUpload}
+                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition"
                 />
+                {brandImageFile && (
+                  <img src={brandImageFile} alt="Brand preview" className="mt-3 max-h-32 rounded shadow" />
+                )}
               </div>
             </div>
 
-            {/* Tipografía */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Tipografía
-              </label>
-              <select
-                value={font}
-                onChange={(e) => setFont(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
-              >
-                {FONT_OPTIONS.map((f) => (
-                  <option key={f} value={f}>{f}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Logo */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Logo de la Empresa
-              </label>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleLogoUpload}
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-brand-blue file:text-white hover:file:bg-brand-dark transition"
-              />
-              {logoFile && (
-                <img src={logoFile} alt="Logo preview" className="mt-3 max-h-16 rounded" />
-              )}
-            </div>
-
-            {/* Imagen de Marca */}
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">
-                Imagen Final del Carrusel
-              </label>
-              <p className="text-xs text-slate-500 mb-2">
-                Esta imagen se añadirá automáticamente al final de cada publicación (contacto, logo grande, etc.)
+            {/* ✅ Conexión de Facebook/Instagram */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">🔗 Redes Sociales</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Conecta tu página de Facebook para publicar automáticamente
               </p>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleBrandImageUpload}
-                className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-600 file:text-white hover:file:bg-green-700 transition"
-              />
-              {brandImageFile && (
-                <img src={brandImageFile} alt="Brand preview" className="mt-3 max-h-32 rounded shadow" />
-              )}
+              <FacebookAuthButton />
             </div>
 
+            {/* Mensajes */}
             {message && (
               <div className={`p-4 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-800' : 'bg-red-50 text-red-800'}`}>
                 {message.text}
               </div>
             )}
 
+            {/* Botón guardar */}
             <button
               onClick={handleSave}
               disabled={isLoading}
               className="w-full bg-brand-blue hover:bg-brand-dark disabled:bg-slate-400 text-white font-bold py-4 rounded-lg transition-colors shadow-lg"
             >
-              {isLoading ? 'Guardando...' : 'Guardar Configuración'}
+              {isLoading ? 'Guardando...' : '💾 Guardar Configuración de Marca'}
             </button>
           </div>
 
           {/* Preview */}
           <div className="bg-white rounded-2xl shadow-lg p-6">
-            <h2 className="text-xl font-bold text-slate-800 mb-4">Vista Previa</h2>
+            <h2 className="text-xl font-bold text-slate-800 mb-4">👁️ Vista Previa</h2>
             
             <div 
               className="relative w-full rounded-xl overflow-hidden shadow-2xl"
@@ -219,10 +256,7 @@ export const BrandingSetup: React.FC = () => {
                   />
                 )}
                 <div className="text-2xl font-black leading-tight" style={{ textShadow: '0 2px 12px rgba(0,0,0,0.6)' }}>
-                  🏠 Villa en Venta<br />
-                  📍 Torrevieja, España<br />
-                  💶 299.000 €<br />
-                  ✨ 3 dormitorios · Piscina
+                  {renderSummaryWithLineBreaks('🏠 Villa en Venta<br />📍 Torrevieja, España<br />💶 299.000 €<br />✨ Piscina incluida')}
                 </div>
               </div>
             </div>

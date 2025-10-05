@@ -1,5 +1,5 @@
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
-  'https://wonderful-stillness-production.up.railway.app';
+  'https://wonderful-stillness-production-6167.up.railway.app';
 
 const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || '1875210546681103';
 
@@ -12,10 +12,7 @@ declare global {
 
 interface AuthResponse {
   success: boolean;
-  token: string;
   user: {
-    id: string;
-    email: string;
     pageName: string;
     instagramUsername?: string;
   };
@@ -84,13 +81,11 @@ export class AuthService {
 
       return new Promise((resolve, reject) => {
         window.FB.login(
-          (response: any) => {  // ✅ Sin async
+          (response: any) => {
             if (response.status === 'connected') {
-              this.authenticateWithBackend(
+              this.connectFacebookToBackend(
                 response.authResponse.accessToken
               ).then(authData => {
-                localStorage.setItem('authToken', authData.token);
-                localStorage.setItem('userData', JSON.stringify(authData.user));
                 resolve(authData);
               }).catch(error => {
                 reject(new Error(error.message || 'Authentication failed'));
@@ -110,12 +105,19 @@ export class AuthService {
     }
   }
 
-  static async authenticateWithBackend(facebookToken: string, selectedPageId?: string): Promise<AuthResponse> {
+  static async connectFacebookToBackend(facebookToken: string, selectedPageId?: string): Promise<AuthResponse> {
+    const authToken = localStorage.getItem('authToken');
+    
+    if (!authToken) {
+      throw new Error('No estás autenticado. Inicia sesión primero.');
+    }
+
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/facebook`, {
+      const response = await fetch(`${BACKEND_URL}/api/facebook/connect`, { // ✅ Ruta correcta
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${authToken}`, // ✅ Token de usuario
         },
         body: JSON.stringify({
           accessToken: facebookToken,
@@ -125,12 +127,12 @@ export class AuthService {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.error || 'Authentication failed');
+        throw new Error(error.error || 'Failed to connect Facebook');
       }
 
       return await response.json();
     } catch (error: any) {
-      throw new Error(error.message || 'Failed to authenticate with backend');
+      throw new Error(error.message || 'Failed to connect Facebook');
     }
   }
 
@@ -139,28 +141,22 @@ export class AuthService {
     if (!token) return false;
 
     try {
-      const response = await fetch(`${BACKEND_URL}/api/auth/status`, {
+      const response = await fetch(`${BACKEND_URL}/api/facebook/status`, {
         headers: { 'Authorization': `Bearer ${token}` },
       });
 
       if (!response.ok) {
-        this.logout();
         return false;
       }
 
       const data = await response.json();
-      if (data.user) {
-        localStorage.setItem('userData', JSON.stringify(data.user));
-      }
-      return data.authenticated;
+      return data.connected;
     } catch (error) {
       return false;
     }
   }
 
   static logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userData');
     if (window.FB) {
       window.FB.logout();
     }

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
-  'https://wonderful-stillness-production.up.railway.app';
+  'https://wonderful-stillness-production-6167.up.railway.app';
 
 interface User {
   id: string;
@@ -23,6 +23,7 @@ interface AuthContextType {
   register: (email: string, password: string, name: string) => Promise<void>;
   logout: () => void;
   updateBranding: (branding: Partial<User>) => Promise<void>;
+  refreshUser: () => Promise<void>; // ✅ Nuevo
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -30,6 +31,33 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
+  // ✅ Función reutilizable para obtener el usuario
+  const fetchUser = async (token: string) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+        localStorage.setItem('userData', JSON.stringify(userData));
+        return userData;
+      } else {
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
+        setUser(null);
+        return null;
+      }
+    } catch (error) {
+      console.error('Fetch user error:', error);
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userData');
+      setUser(null);
+      return null;
+    }
+  };
 
   // Verificar autenticación al cargar
   useEffect(() => {
@@ -40,27 +68,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
 
-      try {
-        const response = await fetch(`${BACKEND_URL}/api/auth/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-
-        if (response.ok) {
-          const userData = await response.json();
-          setUser(userData);
-        } else {
-          localStorage.removeItem('authToken');
-        }
-      } catch (error) {
-        console.error('Auth check error:', error);
-        localStorage.removeItem('authToken');
-      } finally {
-        setIsLoading(false);
-      }
+      await fetchUser(token);
+      setIsLoading(false);
     };
 
     checkAuth();
   }, []);
+
+  // ✅ Nueva función para refrescar el usuario sin recargar la página
+  const refreshUser = async () => {
+    const token = localStorage.getItem('authToken');
+    if (!token) return;
+    
+    await fetchUser(token);
+  };
 
   const login = async (email: string, password: string) => {
     const response = await fetch(`${BACKEND_URL}/api/auth/login`, {
@@ -76,6 +97,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const data = await response.json();
     localStorage.setItem('authToken', data.token);
+    localStorage.setItem('userData', JSON.stringify(data.user));
     setUser(data.user);
   };
 
@@ -93,31 +115,41 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const data = await response.json();
     localStorage.setItem('authToken', data.token);
+    localStorage.setItem('userData', JSON.stringify(data.user));
     setUser(data.user);
   };
 
   const logout = () => {
     localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
     setUser(null);
   };
 
   const updateBranding = async (branding: Partial<User>) => {
     const token = localStorage.getItem('authToken');
+    
+    if (!token) {
+      throw new Error('No estás autenticado. Por favor inicia sesión de nuevo.');
+    }
+
     const response = await fetch(`${BACKEND_URL}/api/auth/profile/branding`, {
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
+        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify(branding),
     });
 
     if (!response.ok) {
-      throw new Error('Error al actualizar configuración');
+      const error = await response.json();
+      throw new Error(error.error || 'Error al actualizar configuración');
     }
 
     const data = await response.json();
-    setUser({ ...user!, ...data.user });
+    const updatedUser = { ...user!, ...data.user };
+    setUser(updatedUser);
+    localStorage.setItem('userData', JSON.stringify(updatedUser));
   };
 
   return (
@@ -130,6 +162,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         register,
         logout,
         updateBranding,
+        refreshUser, // ✅ Exportar
       }}
     >
       {children}
