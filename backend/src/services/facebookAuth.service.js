@@ -94,14 +94,25 @@ class FacebookAuthService {
         ? pages.find(p => p.id === selectedPageId) || pages[0]
         : pages[0];
 
+      // Declarar tokenExpiry AQUÍ, antes de usarlo
+      const tokenExpiry = new Date();
+      tokenExpiry.setDate(tokenExpiry.getDate() + 60);
+
       const instagramAccount = await this.getInstagramAccount(selectedPage.id, selectedPage.access_token);
 
       if (!instagramAccount) {
-        throw new Error('No Instagram Business Account linked');
+        console.warn('No Instagram account found, continuing with Facebook only');
+        return {
+          facebookUserId: userData.id,
+          email: userData.email,
+          pageId: selectedPage.id,
+          pageName: selectedPage.name,
+          pageAccessToken: selectedPage.access_token,
+          userAccessToken: longLivedToken,
+          tokenExpiry,
+          availablePages: pages.map(p => ({ id: p.id, name: p.name })),
+        };
       }
-
-      const tokenExpiry = new Date();
-      tokenExpiry.setDate(tokenExpiry.getDate() + 60);
 
       return {
         facebookUserId: userData.id,

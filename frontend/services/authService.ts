@@ -1,8 +1,14 @@
-const BACKEND_URL = import.meta.env.MODE === 'development'
-  ? 'http://localhost:5000'
-  : 'https://wonderful-stillness-production.up.railway.app';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
+  'https://wonderful-stillness-production.up.railway.app';
 
-const FB_APP_ID = '12268279413618871';
+const FB_APP_ID = import.meta.env.VITE_FB_APP_ID || '1875210546681103';
+
+declare global {
+  interface Window {
+    FB: any;
+    fbAsyncInit: (() => void) | undefined;
+  }
+}
 
 interface AuthResponse {
   success: boolean;
@@ -11,58 +17,97 @@ interface AuthResponse {
     id: string;
     email: string;
     pageName: string;
-    instagramUsername: string;
+    instagramUsername?: string;
   };
   availablePages?: Array<{ id: string; name: string }>;
 }
 
 export class AuthService {
+  private static sdkInitialized = false;
+  private static sdkLoading = false;
+  private static sdkLoadPromise: Promise<void> | null = null;
+
   static initFacebookSDK(): Promise<void> {
-    return new Promise((resolve) => {
-      if ((window as any).FB) {
-        resolve();
-        return;
+    if (this.sdkInitialized && window.FB) {
+      return Promise.resolve();
+    }
+
+    if (this.sdkLoading && this.sdkLoadPromise) {
+      return this.sdkLoadPromise;
+    }
+
+    this.sdkLoading = true;
+    this.sdkLoadPromise = new Promise((resolve, reject) => {
+      if (!document.getElementById('facebook-jssdk')) {
+        const script = document.createElement('script');
+        script.id = 'facebook-jssdk';
+        script.src = 'https://connect.facebook.net/es_LA/sdk.js';
+        script.async = true;
+        script.defer = true;
+        
+        script.onerror = () => {
+          this.sdkLoading = false;
+          reject(new Error('Failed to load Facebook SDK'));
+        };
+        
+        document.body.appendChild(script);
       }
 
-      (window as any).fbAsyncInit = function () {
-        (window as any).FB.init({
+      window.fbAsyncInit = () => {
+        window.FB.init({
           appId: FB_APP_ID,
           cookie: true,
           xfbml: true,
-          version: 'v20.0'
+          version: 'v23.0'
         });
+
+        this.sdkInitialized = true;
+        this.sdkLoading = false;
+        console.log('Facebook SDK initialized');
         resolve();
       };
+
+      setTimeout(() => {
+        if (!this.sdkInitialized) {
+          this.sdkLoading = false;
+          reject(new Error('Facebook SDK initialization timeout'));
+        }
+      }, 10000);
     });
+
+    return this.sdkLoadPromise;
   }
 
   static async loginWithFacebook(): Promise<AuthResponse> {
-    await this.initFacebookSDK();
+    try {
+      await this.initFacebookSDK();
 
-    return new Promise((resolve, reject) => {
-      (window as any).FB.login(
-        (response: any) => {  // ✅ función normal
-          if (response.status === 'connected') {
-            (async () => {  // IIFE async dentro del callback
-              try {
-                const authData = await this.authenticateWithBackend(response.authResponse.accessToken);
+      return new Promise((resolve, reject) => {
+        window.FB.login(
+          (response: any) => {  // ✅ Sin async
+            if (response.status === 'connected') {
+              this.authenticateWithBackend(
+                response.authResponse.accessToken
+              ).then(authData => {
                 localStorage.setItem('authToken', authData.token);
                 localStorage.setItem('userData', JSON.stringify(authData.user));
                 resolve(authData);
-              } catch (error: any) {
+              }).catch(error => {
                 reject(new Error(error.message || 'Authentication failed'));
-              }
-            })();
-          } else {
-            reject(new Error('Facebook login cancelled or failed'));
+              });
+            } else {
+              reject(new Error('Facebook login cancelled or failed'));
+            }
+          },
+          {
+            scope: 'pages_show_list,pages_read_engagement,pages_manage_posts',
+            return_scopes: true
           }
-        },
-        {
-          scope: 'pages_show_list,pages_read_engagement,pages_manage_posts,instagram_basic,instagram_content_publish',
-          return_scopes: true
-        }
-      );
-    });
+        );
+      });
+    } catch (error: any) {
+      throw error;
+    }
   }
 
   static async authenticateWithBackend(facebookToken: string, selectedPageId?: string): Promise<AuthResponse> {
@@ -116,8 +161,8 @@ export class AuthService {
   static logout(): void {
     localStorage.removeItem('authToken');
     localStorage.removeItem('userData');
-    if ((window as any).FB) {
-      (window as any).FB.logout();
+    if (window.FB) {
+      window.FB.logout();
     }
   }
 

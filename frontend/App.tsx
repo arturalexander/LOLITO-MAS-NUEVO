@@ -12,7 +12,8 @@ import { SummarySkeleton } from './components/SummarySkeleton';
 import { SocialImageDisplay } from './components/SocialImageDisplay';
 import { SocialImageSkeleton } from './components/SocialImageSkeleton';
 import { TemplateCustomizer } from './components/TemplateCustomizer';
-import { InstagramPublisherV2 } from './components/InstagramPublisherV2';
+import { FacebookPublisher } from './components/FacebookPublisher';
+
 const App: React.FC = () => {
   const [imageUrls, setImageUrls] = useState<string[]>([]);
   const [socialPost, setSocialPost] = useState<string | null>(null);
@@ -35,7 +36,7 @@ const App: React.FC = () => {
   const [templateColors, setTemplateColors] = useState<{color1: string, color2: string}>({ color1: '#0077b6', color2: '#00b4d8' });
   const [templateFont, setTemplateFont] = useState<string>('Inter');
   const [templateLogo, setTemplateLogo] = useState<string | null>(null);
-
+  const [brandImage, setBrandImage] = useState<string | null>(null);
 
   const handleUrlSubmit = useCallback(async (url: string) => {
     if (!url) {
@@ -48,7 +49,7 @@ const App: React.FC = () => {
     setIsExtracting(true);
     setIsGenerating(true);
     setIsSummarizing(true);
-    setIsCreatingImage(false); // Do not start image creation automatically
+    setIsCreatingImage(false);
     setExtractError(null);
     setPostError(null);
     setSummaryError(null);
@@ -58,7 +59,7 @@ const App: React.FC = () => {
     setShortSummary(null);
     setSocialImageUrl(null);
 
-    const PROXY_URL = 'https://api.allorigins.win/raw?url=';
+    const PROXY_URL = 'https://corsproxy.io/?';
 
     try {
       const response = await fetch(`${PROXY_URL}${encodeURIComponent(url)}`);
@@ -91,7 +92,6 @@ const App: React.FC = () => {
         try {
           const summary = await generateShortSummary(post);
           setShortSummary(summary);
-          // NOTE: Image generation is now triggered by user action
         } catch (e) {
           const errorMessage = e instanceof Error ? e.message : "Error desconocido.";
           setSummaryError(`Error al generar el resumen: ${errorMessage}`);
@@ -140,7 +140,6 @@ const App: React.FC = () => {
       }
   }, [shortSummary, imageUrls, templateColors, templateFont, templateLogo]);
 
-
   const isLoading = isExtracting || isGenerating || isSummarizing;
 
   return (
@@ -160,13 +159,16 @@ const App: React.FC = () => {
                 
                 {shortSummary && imageUrls.length > 0 && (
                     <TemplateCustomizer 
-                        colors={templateColors}
-                        onColorsChange={setTemplateColors}
-                        font={templateFont}
-                        onFontChange={setTemplateFont}
-                        onLogoChange={setTemplateLogo}
-                        onRegenerate={handleRegenerateImage}
-                        isGenerating={isCreatingImage}
+                      colors={templateColors}
+                      onColorsChange={setTemplateColors}
+                      font={templateFont}
+                      onFontChange={setTemplateFont}
+                      onLogoChange={setTemplateLogo}
+                      onBrandImageChange={setBrandImage}
+                      onRegenerate={handleRegenerateImage}
+                      isGenerating={isCreatingImage}
+                      shortSummary={shortSummary}
+                      firstImageUrl={imageUrls[0] || null}
                     />
                 )}
                 
@@ -182,7 +184,7 @@ const App: React.FC = () => {
                   <div className="text-center py-10 px-6 bg-white rounded-lg shadow-md mt-6">
                     <p className="text-slate-600 font-semibold">¡Contenido listo!</p>
                     <p className="text-slate-500 mt-2">
-                      Personaliza tu plantilla y haz clic en "Actualizar Imagen" para crear tu visual.
+                      Personaliza tu plantilla y haz clic en "Generar Imagen de Marketing" para crear tu visual.
                     </p>
                   </div>
                 )}
@@ -199,14 +201,12 @@ const App: React.FC = () => {
               <div className="space-y-10">
                 
                 {hasProcessed && socialPost && (
-                  
-                
-
-                  <InstagramPublisherV2 
-                      socialPost={socialPost}
-                      socialImageUrl={socialImageUrl}
-                      imageUrls={imageUrls}
-  />
+                  <FacebookPublisher
+                    socialPost={socialPost}
+                    socialImageUrl={socialImageUrl}
+                    imageUrls={imageUrls}
+                    brandImage={brandImage}
+                  />
                 )}
 
                 <div>

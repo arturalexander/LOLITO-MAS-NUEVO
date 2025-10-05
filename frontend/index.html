@@ -4,26 +4,36 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extractor de Assets Inmobiliarios</title>
-    <!-- Tailwind compilado por Vite -->
-    <link rel="stylesheet" href="/index.css" />
-  </head>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              'brand-blue': '#0077b6',
+              'brand-light-blue': '#00b4d8',
+              'brand-dark': '#03045e',
+            }
+          }
+        }
+      }
+    </script>
+  <script type="importmap">
+{
+  "imports": {
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.1.1/",
+    "react/": "https://aistudiocdn.com/react@^19.1.1/",
+    "react": "https://aistudiocdn.com/react@^19.1.1",
+    "@google/genai": "https://esm.run/@google/genai"
+  }
+}
+</script>
+</head>
   <body class="bg-slate-50">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
 
     <!-- Facebook SDK for JavaScript -->
-    <script>
-      // This is initialized by services/instagramService.ts
-      window.fbAsyncInit = function() {};
-
-      (function(d, s, id){
-         var js, fjs = d.getElementsByTagName(s)[0];
-         if (d.getElementById(id)) {return;}
-         js = d.createElement(s); js.id = id;
-         // Spanish (Latin America) version of the SDK
-         js.src = "https://connect.facebook.net/es_LA/sdk.js";
-         fjs.parentNode.insertBefore(js, fjs);
-       }(document, 'script', 'facebook-jssdk'));
-    </script>
+    
   </body>
 </html>

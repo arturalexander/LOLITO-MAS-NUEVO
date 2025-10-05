@@ -8,6 +8,9 @@ export default defineConfig(({ mode }) => {
       server: {
         port: 3000,
         host: '0.0.0.0',
+        allowedHosts: [
+          'sydney-stubbly-carroll.ngrok-free.dev'  // Añade esta línea
+        ]
       },
       plugins: [react()],
       define: {
