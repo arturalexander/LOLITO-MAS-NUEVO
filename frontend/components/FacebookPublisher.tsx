@@ -23,6 +23,7 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
   const [uploadStatus, setUploadStatus] = useState<string>('');
 
   const isConnected = !!(user?.pageName);
+  const isAutoMode = user?.autoPublish;
 
   const handlePublish = async () => {
     if (!isConnected) {
@@ -80,10 +81,16 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         <div>
           <h3 className="text-lg font-bold text-slate-800">Publicar en Facebook</h3>
           {isConnected ? (
-            <p className="text-sm text-green-600">
-              ✅ Conectado: {user.pageName}
-              {user.instagramUsername && ` • @${user.instagramUsername}`}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-green-600">
+                ✅ {user.pageName}
+              </p>
+              {isAutoMode && (
+                <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-semibold">
+                  ⚡ Automático
+                </span>
+              )}
+            </div>
           ) : (
             <p className="text-sm text-orange-600">
               ⚠️ No conectado - Ve a Configuración
@@ -92,28 +99,38 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         </div>
       </div>
 
-      <button
-        onClick={handlePublish}
-        disabled={isPublishing || !socialPost || !socialImageUrl || !isConnected}
-        className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center space-x-2"
-      >
-        {isPublishing ? (
-          <>
-            <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            <span>{uploadStatus || 'Publicando...'}</span>
-          </>
-        ) : (
-          <>
-            <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
-            </svg>
-            <span>Publicar Carrusel en Facebook</span>
-          </>
-        )}
-      </button>
+      {isAutoMode && isConnected && (
+        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+          <p className="text-sm text-blue-800">
+            ⚡ <strong>Modo automático activado:</strong> La publicación se subirá automáticamente al generar el contenido. No necesitas hacer clic en "Publicar".
+          </p>
+        </div>
+      )}
+
+      {!isAutoMode && (
+        <button
+          onClick={handlePublish}
+          disabled={isPublishing || !socialPost || !socialImageUrl || !isConnected}
+          className="w-full bg-blue-600 hover:bg-blue-700 disabled:bg-slate-400 text-white font-bold py-4 px-6 rounded-lg transition-all shadow-lg hover:shadow-xl disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+        >
+          {isPublishing ? (
+            <>
+              <svg className="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>{uploadStatus || 'Publicando...'}</span>
+            </>
+          ) : (
+            <>
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M18 2h-3a5 5 0 00-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 011-1h3z"/>
+              </svg>
+              <span>Publicar Carrusel en Facebook</span>
+            </>
+          )}
+        </button>
+      )}
 
       {publishResult && (
         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">

@@ -144,9 +144,10 @@ router.post('/link-facebook', authenticateUser, async (req, res) => {
 });
 
 // ========== Actualizar configuración de marca ==========
+// ========== Actualizar configuración de marca ==========
 router.patch('/profile/branding', authenticateUser, async (req, res) => {
   try {
-    const { brandColors, brandFont, brandLogoUrl, brandImageUrl } = req.body;
+    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish } = req.body; // ✅ Añadido autoPublish
 
     const user = req.user;
 
@@ -154,6 +155,7 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
     if (brandFont) user.brandFont = brandFont;
     if (brandLogoUrl !== undefined) user.brandLogoUrl = brandLogoUrl;
     if (brandImageUrl !== undefined) user.brandImageUrl = brandImageUrl;
+    if (autoPublish !== undefined) user.autoPublish = autoPublish; // ✅ Añadido
 
     await user.save();
 
@@ -167,6 +169,7 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
         brandFont: user.brandFont,
         brandLogoUrl: user.brandLogoUrl,
         brandImageUrl: user.brandImageUrl,
+        autoPublish: user.autoPublish, // ✅ Añadido
       },
     });
   } catch (error) {
@@ -175,6 +178,7 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
   }
 });
 
+// ========== Obtener perfil del usuario ==========
 // ========== Obtener perfil del usuario ==========
 router.get('/me', authenticateUser, async (req, res) => {
   try {
@@ -188,6 +192,7 @@ router.get('/me', authenticateUser, async (req, res) => {
       brandFont: user.brandFont,
       brandLogoUrl: user.brandLogoUrl,
       brandImageUrl: user.brandImageUrl,
+      autoPublish: user.autoPublish, // ✅ Añadido
       pageName: user.pageName,
       instagramUsername: user.instagramUsername,
     });

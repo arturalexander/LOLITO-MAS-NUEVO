@@ -1,4 +1,3 @@
-// backend/src/models/UserProfile.js
 const mongoose = require('mongoose');
 
 const userProfileSchema = new mongoose.Schema({
@@ -36,12 +35,16 @@ const userProfileSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  // Imagen de marca/contacto que se añade al carrusel
   brandImageUrl: {
     type: String,
     default: null,
   },
-  // Relación con Facebook/Instagram (opcional)
+  // ✅ Modo automático
+  autoPublish: {
+    type: Boolean,
+    default: false,
+  },
+  // Relación con Facebook/Instagram
   facebookUserId: {
     type: String,
     default: null,

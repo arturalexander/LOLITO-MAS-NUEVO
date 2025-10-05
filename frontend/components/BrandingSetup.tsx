@@ -16,6 +16,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
   const [font, setFont] = useState(user?.brandFont || 'Inter');
   const [logoFile, setLogoFile] = useState<string | null>(user?.brandLogoUrl || null);
   const [brandImageFile, setBrandImageFile] = useState<string | null>(user?.brandImageUrl || null);
+  const [autoPublish, setAutoPublish] = useState(user?.autoPublish || false);
   
   const [isLoading, setIsLoading] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -27,6 +28,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
       setFont(user.brandFont);
       setLogoFile(user.brandLogoUrl);
       setBrandImageFile(user.brandImageUrl);
+      setAutoPublish(user.autoPublish || false);
     }
   }, [user]);
 
@@ -62,6 +64,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
         brandFont: font,
         brandLogoUrl: logoFile,
         brandImageUrl: brandImageFile,
+        autoPublish,
       });
 
       setMessage({ type: 'success', text: '✅ Configuración guardada exitosamente' });
@@ -204,13 +207,55 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
               </div>
             </div>
 
-            {/* ✅ Conexión de Facebook/Instagram */}
+            {/* Conexión de Facebook/Instagram */}
             <div className="bg-white rounded-2xl shadow-lg p-6">
               <h2 className="text-xl font-bold text-slate-800 mb-4">🔗 Redes Sociales</h2>
               <p className="text-sm text-slate-600 mb-4">
                 Conecta tu página de Facebook para publicar automáticamente
               </p>
               <FacebookAuthButton />
+            </div>
+
+            {/* Modo Automático */}
+            <div className="bg-white rounded-2xl shadow-lg p-6">
+              <h2 className="text-xl font-bold text-slate-800 mb-4">⚡ Publicación Automática</h2>
+              <p className="text-sm text-slate-600 mb-4">
+                Cuando está activado, las publicaciones se suben automáticamente a Facebook sin necesidad de hacer clic en "Publicar"
+              </p>
+              
+              <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg">
+                <div>
+                  <p className="font-semibold text-slate-800">Modo Automático</p>
+                  <p className="text-xs text-slate-500 mt-1">
+                    {autoPublish 
+                      ? '✅ Las publicaciones se suben automáticamente' 
+                      : '⏸️ Debes hacer clic en "Publicar" manualmente'}
+                  </p>
+                </div>
+                
+                {/* Toggle Switch */}
+                <button
+                  type="button"
+                  onClick={() => setAutoPublish(!autoPublish)}
+                  className={`relative inline-flex h-8 w-14 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-brand-blue focus:ring-offset-2 ${
+                    autoPublish ? 'bg-green-500' : 'bg-slate-300'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-6 w-6 transform rounded-full bg-white transition-transform ${
+                      autoPublish ? 'translate-x-7' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+              </div>
+
+              {autoPublish && !user?.pageName && (
+                <div className="mt-4 bg-orange-50 border-l-4 border-orange-500 p-3 rounded">
+                  <p className="text-sm text-orange-800">
+                    ⚠️ <strong>Atención:</strong> Necesitas conectar tu Facebook primero para que la publicación automática funcione
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Mensajes */}
@@ -226,7 +271,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
               disabled={isLoading}
               className="w-full bg-brand-blue hover:bg-brand-dark disabled:bg-slate-400 text-white font-bold py-4 rounded-lg transition-colors shadow-lg"
             >
-              {isLoading ? 'Guardando...' : '💾 Guardar Configuración de Marca'}
+              {isLoading ? 'Guardando...' : '💾 Guardar Configuración'}
             </button>
           </div>
 

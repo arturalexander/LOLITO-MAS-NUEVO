@@ -15,8 +15,9 @@ import { SummarySkeleton } from './components/SummarySkeleton';
 import { SocialImageDisplay } from './components/SocialImageDisplay';
 import { SocialImageSkeleton } from './components/SocialImageSkeleton';
 import { FacebookPublisher } from './components/FacebookPublisher';
+import { PostService } from './services/postService';
+import { uploadBase64Image } from './services/imageUploadService';
 
-// ✅ Componente interno que USA useAuth (dentro del Provider)
 const MainApp: React.FC = () => {
   const { user, isAuthenticated, isLoading: authLoading, logout } = useAuth();
   const [showBrandingSetup, setShowBrandingSetup] = useState(false);
@@ -30,13 +31,77 @@ const MainApp: React.FC = () => {
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [isSummarizing, setIsSummarizing] = useState<boolean>(false);
   const [isCreatingImage, setIsCreatingImage] = useState<boolean>(false);
+  const [isAutoPublishing, setIsAutoPublishing] = useState<boolean>(false);
 
   const [extractError, setExtractError] = useState<string | null>(null);
   const [postError, setPostError] = useState<string | null>(null);
   const [summaryError, setSummaryError] = useState<string | null>(null);
   const [imageCreateError, setImageCreateError] = useState<string | null>(null);
+  const [autoPublishError, setAutoPublishError] = useState<string | null>(null);
   
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
+
+  const autoPublishToFacebook = async (
+    socialImageUrl: string, 
+    socialPost: string, 
+    imageUrls: string[]
+  ) => {
+    if (!user?.autoPublish || !user?.pageName) {
+      return;
+    }
+
+    setIsAutoPublishing(true);
+    setAutoPublishError(null);
+
+    try {
+      console.log('🚀 Publicación automática iniciada...');
+      
+      const carouselImages = [socialImageUrl, ...imageUrls.slice(0, 3)];
+
+      if (user?.brandImageUrl) {
+        try {
+          if (user.brandImageUrl.startsWith('data:')) {
+            const brandImageUrl = await uploadBase64Image(user.brandImageUrl);
+            carouselImages.push(brandImageUrl);
+          } else {
+            carouselImages.push(user.brandImageUrl);
+          }
+        } catch (uploadError) {
+          console.warn('Error al subir imagen de marca, continuando sin ella:', uploadError);
+        }
+      }
+
+      await PostService.publishToFacebook(carouselImages, socialPost);
+      
+      console.log('✅ Publicado automáticamente en Facebook');
+      
+      // Mostrar notificación de éxito
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-bounce';
+      notification.innerHTML = '✅ ¡Publicado automáticamente en Facebook!';
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+      
+    } catch (error: any) {
+      console.error('Error en publicación automática:', error);
+      setAutoPublishError(error.message || 'Error al publicar automáticamente');
+      
+      // Mostrar notificación de error
+      const notification = document.createElement('div');
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+      notification.innerHTML = `❌ Error en publicación automática: ${error.message}`;
+      document.body.appendChild(notification);
+      
+      setTimeout(() => {
+        notification.remove();
+      }, 5000);
+    } finally {
+      setIsAutoPublishing(false);
+    }
+  };
 
   const handleUrlSubmit = useCallback(async (url: string) => {
     if (!url) {
@@ -53,6 +118,7 @@ const MainApp: React.FC = () => {
     setPostError(null);
     setSummaryError(null);
     setImageCreateError(null);
+    setAutoPublishError(null);
     setImageUrls([]);
     setSocialPost(null);
     setShortSummary(null);
@@ -103,15 +169,23 @@ const MainApp: React.FC = () => {
                 }
               );
               setSocialImageUrl(generatedImageUrl);
+              setIsCreatingImage(false);
+
+              // PUBLICACIÓN AUTOMÁTICA
+              if (user.autoPublish && user.pageName) {
+                await autoPublishToFacebook(generatedImageUrl, post, extractedUrls);
+              }
             } catch (err) {
               const errorMessage = err instanceof Error ? err.message : "Error al generar imagen.";
               setImageCreateError(`Error: ${errorMessage}`);
+              setIsCreatingImage(false);
             }
+          } else {
+            setIsCreatingImage(false);
           }
         } catch (e) {
           const errorMessage = e instanceof Error ? e.message : "Error desconocido.";
           setSummaryError(`Error al generar resumen: ${errorMessage}`);
-        } finally {
           setIsSummarizing(false);
           setIsCreatingImage(false);
         }
@@ -138,7 +212,6 @@ const MainApp: React.FC = () => {
 
   const isLoading = isExtracting || isGenerating || isSummarizing;
 
-  // Loading
   if (authLoading) {
     return (
       <div className="min-h-screen bg-slate-100 flex items-center justify-center">
@@ -150,12 +223,10 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // Login
   if (!isAuthenticated) {
     return <AuthForm />;
   }
 
-  // Configuración de marca
   if (showBrandingSetup) {
     return (
       <div>
@@ -164,10 +235,8 @@ const MainApp: React.FC = () => {
     );
   }
 
-  // App principal
   return (
     <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
-      {/* Barra superior */}
       <div className="bg-white shadow-sm border-b">
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-3">
@@ -225,12 +294,33 @@ const MainApp: React.FC = () => {
               <h2 className="text-2xl font-bold text-center text-brand-dark mb-6">Contenido Generado</h2>
               <div className="space-y-10">
                 {socialPost && (
-                  <FacebookPublisher
-                    socialPost={socialPost}
-                    socialImageUrl={socialImageUrl}
-                    imageUrls={imageUrls}
-                    brandImage={user?.brandImageUrl || null}
-                  />
+                  <>
+                    <FacebookPublisher
+                      socialPost={socialPost}
+                      socialImageUrl={socialImageUrl}
+                      imageUrls={imageUrls}
+                      brandImage={user?.brandImageUrl || null}
+                    />
+                    
+                    {isAutoPublishing && (
+                      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <svg className="animate-spin h-5 w-5 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <p className="text-sm font-semibold text-blue-800">Publicando automáticamente en Facebook...</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {autoPublishError && (
+                      <div className="bg-red-50 border-l-4 border-red-500 p-4 rounded-lg">
+                        <p className="text-sm font-semibold text-red-800">Error en publicación automática</p>
+                        <p className="text-sm text-red-700 mt-1">{autoPublishError}</p>
+                      </div>
+                    )}
+                  </>
                 )}
 
                 <div>
@@ -259,7 +349,6 @@ const MainApp: React.FC = () => {
   );
 };
 
-// ✅ Componente App que PROVEE el AuthProvider
 const App: React.FC = () => {
   return (
     <AuthProvider>

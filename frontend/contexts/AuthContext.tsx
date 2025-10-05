@@ -11,6 +11,8 @@ interface User {
   brandFont: string;
   brandLogoUrl: string | null;
   brandImageUrl: string | null;
+  autoPublish: boolean; // ✅ Nuevo
+
   instagramUsername?: string;
   pageName?: string;
 }
