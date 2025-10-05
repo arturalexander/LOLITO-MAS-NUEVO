@@ -7,7 +7,7 @@ interface FacebookPublisherProps {
   socialPost: string;
   socialImageUrl: string | null;
   imageUrls: string[];
-  brandImage: string | null;
+  brandImage: string | null; // Ya viene de user.brandImageUrl
 }
 
 export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
@@ -54,13 +54,19 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         ...imageUrls.slice(0, 3)
       ];
 
-      // Si hay imagen de marca en base64, subirla primero a ImgBB
+      // Si hay imagen de marca guardada en el perfil, subirla
       if (brandImage) {
         setUploadStatus('Subiendo imagen de marca...');
         try {
-          const brandImageUrl = await uploadBase64Image(brandImage);
-          carouselImages.push(brandImageUrl);
-          setUploadStatus('Imagen de marca subida. Publicando...');
+          // Si es base64, subir a ImgBB
+          if (brandImage.startsWith('data:')) {
+            const brandImageUrl = await uploadBase64Image(brandImage);
+            carouselImages.push(brandImageUrl);
+          } else {
+            // Si ya es una URL, añadirla directamente
+            carouselImages.push(brandImage);
+          }
+          setUploadStatus('Imagen de marca añadida. Publicando...');
         } catch (uploadError) {
           throw new Error('Error al subir la imagen de marca. Verifica tu API key de ImgBB.');
         }
@@ -87,7 +93,9 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         </div>
         <div>
           <h3 className="text-lg font-bold text-slate-800">Publicar en Facebook</h3>
-          <p className="text-sm text-slate-500">Comparte en tu página</p>
+          <p className="text-sm text-slate-500">
+            {brandImage ? `Carrusel con ${imageUrls.length + 2} imágenes` : `Carrusel con ${imageUrls.length + 1} imágenes`}
+          </p>
         </div>
       </div>
 
@@ -120,7 +128,7 @@ export const FacebookPublisher: React.FC<FacebookPublisherProps> = ({
         <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded">
           <p className="text-sm font-semibold text-green-800">¡Carrusel publicado exitosamente!</p>
           <p className="text-xs text-green-700 mt-1">
-            {brandImage ? '5 imágenes' : '4 imágenes'} publicadas
+            {brandImage ? `${imageUrls.length + 2} imágenes` : `${imageUrls.length + 1} imágenes`} publicadas
           </p>
         </div>
       )}
