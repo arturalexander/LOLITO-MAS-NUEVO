@@ -12,7 +12,7 @@ interface User {
   brandLogoUrl: string | null;
   brandImageUrl: string | null;
   autoPublish: boolean; // ✅ Nuevo
-
+  scheduledTime: string; // Añade esta línea
   instagramUsername?: string;
   pageName?: string;
 }

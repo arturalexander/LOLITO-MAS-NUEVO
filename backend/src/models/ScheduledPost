@@ -1,0 +1,62 @@
+const mongoose = require('mongoose');
+
+const scheduledPostSchema = new mongoose.Schema({
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserProfile',
+    required: true,
+    index: true,
+  },
+  url: {
+    type: String,
+    required: true,
+  },
+  scheduledTime: {
+    type: String,
+    required: true,
+  },
+  position: {
+    type: Number,
+    required: true,
+  },
+  status: {
+    type: String,
+    enum: ['pending', 'published', 'error'],
+    default: 'pending',
+    index: true,
+  },
+  socialPost: {
+    type: String,
+    default: null,
+  },
+  shortSummary: {
+    type: String,
+    default: null,
+  },
+  socialImageUrl: {
+    type: String,
+    default: null,
+  },
+  imageUrls: {
+    type: [String],
+    default: [],
+  },
+  publishedAt: {
+    type: Date,
+    default: null,
+  },
+  lastAttemptAt: {
+    type: Date,
+    default: null,
+  },
+  error: {
+    type: String,
+    default: null,
+  },
+}, {
+  timestamps: true,
+});
+
+scheduledPostSchema.index({ userId: 1, status: 1, position: 1 });
+
+module.exports = mongoose.model('ScheduledPost', scheduledPostSchema);

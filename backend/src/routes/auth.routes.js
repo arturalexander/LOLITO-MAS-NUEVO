@@ -18,16 +18,13 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Email, password y nombre son requeridos' });
     }
 
-    // Verificar si ya existe
     const existingUser = await UserProfile.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ error: 'El email ya está registrado' });
     }
 
-    // Hash de la contraseña
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Crear usuario
     const user = await UserProfile.create({
       email,
       password: hashedPassword,
@@ -36,7 +33,6 @@ router.post('/register', async (req, res) => {
       brandFont: 'Inter',
     });
 
-    // Generar token
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '30d' });
 
     res.json({
@@ -50,6 +46,8 @@ router.post('/register', async (req, res) => {
         brandFont: user.brandFont,
         brandLogoUrl: user.brandLogoUrl,
         brandImageUrl: user.brandImageUrl,
+        autoPublish: user.autoPublish,
+        scheduledTime: user.scheduledTime,
       },
     });
   } catch (error) {
@@ -67,19 +65,16 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email y password son requeridos' });
     }
 
-    // Buscar usuario
     const user = await UserProfile.findOne({ email });
     if (!user) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Verificar contraseña
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Credenciales inválidas' });
     }
 
-    // Generar token
     const token = jwt.sign({ userId: user._id }, JWT_SECRET, { expiresIn: '30d' });
 
     res.json({
@@ -93,6 +88,8 @@ router.post('/login', async (req, res) => {
         brandFont: user.brandFont,
         brandLogoUrl: user.brandLogoUrl,
         brandImageUrl: user.brandImageUrl,
+        autoPublish: user.autoPublish,
+        scheduledTime: user.scheduledTime,
         pageName: user.pageName,
         instagramUsername: user.instagramUsername,
       },
@@ -114,7 +111,6 @@ router.post('/link-facebook', authenticateUser, async (req, res) => {
 
     const authData = await FacebookAuthService.completeAuthFlow(accessToken, selectedPageId);
 
-    // Actualizar el usuario actual con datos de Facebook
     const user = req.user;
     user.facebookUserId = authData.facebookUserId;
     user.pageId = authData.pageId;
@@ -144,10 +140,9 @@ router.post('/link-facebook', authenticateUser, async (req, res) => {
 });
 
 // ========== Actualizar configuración de marca ==========
-// ========== Actualizar configuración de marca ==========
 router.patch('/profile/branding', authenticateUser, async (req, res) => {
   try {
-    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish } = req.body; // ✅ Añadido autoPublish
+    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish, scheduledTime } = req.body;
 
     const user = req.user;
 
@@ -155,7 +150,8 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
     if (brandFont) user.brandFont = brandFont;
     if (brandLogoUrl !== undefined) user.brandLogoUrl = brandLogoUrl;
     if (brandImageUrl !== undefined) user.brandImageUrl = brandImageUrl;
-    if (autoPublish !== undefined) user.autoPublish = autoPublish; // ✅ Añadido
+    if (autoPublish !== undefined) user.autoPublish = autoPublish;
+    if (scheduledTime) user.scheduledTime = scheduledTime;
 
     await user.save();
 
@@ -169,7 +165,8 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
         brandFont: user.brandFont,
         brandLogoUrl: user.brandLogoUrl,
         brandImageUrl: user.brandImageUrl,
-        autoPublish: user.autoPublish, // ✅ Añadido
+        autoPublish: user.autoPublish,
+        scheduledTime: user.scheduledTime,
       },
     });
   } catch (error) {
@@ -178,7 +175,6 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
   }
 });
 
-// ========== Obtener perfil del usuario ==========
 // ========== Obtener perfil del usuario ==========
 router.get('/me', authenticateUser, async (req, res) => {
   try {
@@ -192,7 +188,8 @@ router.get('/me', authenticateUser, async (req, res) => {
       brandFont: user.brandFont,
       brandLogoUrl: user.brandLogoUrl,
       brandImageUrl: user.brandImageUrl,
-      autoPublish: user.autoPublish, // ✅ Añadido
+      autoPublish: user.autoPublish,
+      scheduledTime: user.scheduledTime,
       pageName: user.pageName,
       instagramUsername: user.instagramUsername,
     });
@@ -228,6 +225,8 @@ router.get('/status', async (req, res) => {
         brandFont: user.brandFont,
         brandLogoUrl: user.brandLogoUrl,
         brandImageUrl: user.brandImageUrl,
+        autoPublish: user.autoPublish,
+        scheduledTime: user.scheduledTime,
       },
     });
   } catch (error) {

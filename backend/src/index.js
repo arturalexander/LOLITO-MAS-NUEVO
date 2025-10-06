@@ -44,13 +44,16 @@ app.get('/health', (req, res) => {
   });
 });
 
+// Routes
 const authRoutes = require('./routes/auth.routes');
 const facebookAuthRoutes = require('./routes/facebookAuth.routes');
 const postRoutes = require('./routes/post.routes');
+const scheduledPostsRoutes = require('./routes/scheduledPosts.routes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/facebook', facebookAuthRoutes);
 app.use('/api/post', postRoutes);
+app.use('/api/scheduled-posts', scheduledPostsRoutes); // ✅ AQUÍ
 
 // Error handler
 app.use((err, req, res, next) => {

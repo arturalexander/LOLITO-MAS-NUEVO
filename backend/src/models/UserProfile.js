@@ -49,6 +49,10 @@ const userProfileSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
+  scheduledTime: {
+  type: String,
+  default: '14:00', // Hora por defecto
+},
   pageId: {
     type: String,
     default: null,

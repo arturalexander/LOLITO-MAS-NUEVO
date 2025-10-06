@@ -8,7 +8,7 @@
   "author": "Hagop Jamkojian <hagopj13@gmail.com>",
   "license": "MIT",
   "engines": {
-    "node": ">=12.0.0"
+    "node": ">=18.0.0"
   },
   "scripts": {
     "start": "node src/index.js",
@@ -46,6 +46,7 @@
     "express": "^4.21.2",
     "express-mongo-sanitize": "^2.0.0",
     "express-rate-limit": "^5.0.0",
+    "form-data": "^4.0.4",
     "helmet": "^4.1.0",
     "http-status": "^1.4.0",
     "joi": "^17.3.0",
@@ -53,6 +54,7 @@
     "moment": "^2.24.0",
     "mongoose": "^5.13.23",
     "morgan": "^1.9.1",
+    "node-fetch": "^2.7.0",
     "nodemailer": "^6.3.1",
     "passport": "^0.4.0",
     "passport-jwt": "^4.0.0",
