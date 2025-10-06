@@ -80,7 +80,7 @@ export const generatePost = async (htmlContent: string, url: string): Promise<st
 const SUMMARY_SYSTEM_INSTRUCTION = `Based on the provided real estate post, return EXACTLY 4 lines in UK English, separated only by <br>.
 
 Rules:
-- Each line must start with one of these emojis in this specific order: 1) 🏠 property type, 2) 📍 location, 3) 💶 price, 4) ✨ feature (m², pool, garden, terrace, views, etc.).
+- Each line must start with one of these emojis in this specific order: 1) 🏠 property type, 2) 📍 location, 3) 💶 price (in numbers), 4) ✨ feature (m², pool, garden, terrace, views, etc.).
 - Capitalize the first word of each line.
 - Use very short phrases: a maximum of 4 words per line (the emoji does not count).
 - Price format: Use a European thousands separator (dot) with the euro symbol at the end (e.g., 299.000 €). If there is no price, omit the entire price line.

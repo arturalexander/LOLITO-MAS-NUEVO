@@ -147,48 +147,44 @@ export const ScheduledQueue: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header con estadísticas */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h2 className="text-2xl font-bold text-slate-800 mb-4">Cola de Publicaciones Programadas</h2>
-        <p className="text-sm text-slate-600 mb-4">
-          Añade URLs que se publicarán automáticamente cada día a las <strong>{user?.scheduledTime || '14:00'}</strong>
+    <div className="space-y-8">
+
+      {/* Estadísticas */}
+      <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
+        <h2 className="text-2xl font-extrabold text-slate-800 mb-4">📊 Cola de Publicaciones Programadas</h2>
+        <p className="text-sm text-slate-600 mb-6">
+          Las publicaciones se enviarán automáticamente cada día a las <strong>{user?.scheduledTime || '14:00'}</strong>.
         </p>
 
         {stats && (
-          <div className="grid grid-cols-4 gap-4">
-            <div className="bg-slate-50 p-4 rounded-lg">
-              <p className="text-xs text-slate-500 uppercase">Total</p>
-              <p className="text-2xl font-bold text-slate-800">{stats.total}</p>
-            </div>
-            <div className="bg-yellow-50 p-4 rounded-lg">
-              <p className="text-xs text-yellow-700 uppercase">Pendientes</p>
-              <p className="text-2xl font-bold text-yellow-800">{stats.pending}</p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <p className="text-xs text-green-700 uppercase">Publicados</p>
-              <p className="text-2xl font-bold text-green-800">{stats.published}</p>
-            </div>
-            <div className="bg-red-50 p-4 rounded-lg">
-              <p className="text-xs text-red-700 uppercase">Errores</p>
-              <p className="text-2xl font-bold text-red-800">{stats.error}</p>
-            </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+            {[
+              { label: 'Total', value: stats.total, color: 'from-slate-100 to-slate-50 text-slate-800' },
+              { label: 'Pendientes', value: stats.pending, color: 'from-yellow-50 to-yellow-100 text-yellow-800' },
+              { label: 'Publicados', value: stats.published, color: 'from-green-50 to-green-100 text-green-800' },
+              { label: 'Errores', value: stats.error, color: 'from-red-50 to-red-100 text-red-800' }
+            ].map((s, i) => (
+              <div key={i} className={`bg-gradient-to-br ${s.color} p-4 rounded-2xl shadow-inner`}>
+                <p className="text-xs uppercase font-semibold opacity-70">{s.label}</p>
+                <p className="text-2xl font-bold">{s.value}</p>
+              </div>
+            ))}
           </div>
         )}
       </div>
 
-      {/* Formulario para añadir URLs */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
-        <h3 className="text-xl font-bold text-slate-800 mb-4">Añadir URLs a la Cola</h3>
+      {/* Añadir URLs */}
+      <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
+        <h3 className="text-xl font-bold text-slate-800 mb-4">➕ Añadir URLs a la Cola</h3>
         <p className="text-sm text-slate-600 mb-4">
-          Pega una URL por línea. Se publicarán en orden, 1 por día.
+          Escribe una URL por línea. Se publicarán en orden (1 por día).
         </p>
 
         <textarea
           value={urls}
           onChange={(e) => setUrls(e.target.value)}
-          placeholder="https://www.ejemplo.com/propiedad-1&#10;https://www.ejemplo.com/propiedad-2&#10;https://www.ejemplo.com/propiedad-3"
-          className="w-full h-40 px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue resize-none font-mono text-sm"
+          placeholder="https://www.ejemplo.com/propiedad-1\nhttps://www.ejemplo.com/propiedad-2"
+          className="w-full h-40 px-4 py-3 bg-white/70 border border-slate-200 rounded-xl shadow-inner focus:ring-2 focus:ring-brand-blue resize-none font-mono text-sm"
           disabled={isLoading}
         />
 
@@ -201,16 +197,16 @@ export const ScheduledQueue: React.FC = () => {
         <button
           onClick={handleAddUrls}
           disabled={isLoading || !urls.trim()}
-          className="mt-4 w-full bg-brand-blue hover:bg-brand-dark disabled:bg-slate-400 text-white font-bold py-3 rounded-lg transition-colors"
+          className="mt-4 w-full py-3 bg-gradient-to-r from-brand-blue to-brand-dark hover:opacity-90 text-white font-semibold rounded-xl shadow-lg transition-all duration-300"
         >
           {isLoading ? 'Añadiendo...' : 'Añadir a la Cola'}
         </button>
       </div>
 
-      {/* Lista de posts */}
-      <div className="bg-white rounded-2xl shadow-lg p-6">
+      {/* Lista */}
+      <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-slate-800">Posts en Cola</h3>
+          <h3 className="text-xl font-bold text-slate-800">🗂️ Posts en Cola</h3>
           {stats && stats.published > 0 && (
             <button
               onClick={handleCleanup}
@@ -227,16 +223,19 @@ export const ScheduledQueue: React.FC = () => {
             <p className="text-slate-500 mt-4">Cargando cola...</p>
           </div>
         ) : posts.length === 0 ? (
-          <div className="text-center py-8 text-slate-500">
-            No hay posts en la cola. Añade algunas URLs arriba.
+          <div className="text-center py-8 text-slate-500 italic">
+            No hay publicaciones en la cola. Añade algunas URLs arriba.
           </div>
         ) : (
           <div className="space-y-3">
             {posts.map((post) => (
-              <div key={post._id} className="flex items-center justify-between p-4 bg-slate-50 rounded-lg hover:bg-slate-100 transition">
+              <div
+                key={post._id}
+                className="flex items-center justify-between p-4 bg-white/60 border border-slate-200 rounded-xl hover:bg-white/80 transition-all duration-200"
+              >
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-1">
-                    <span className="text-sm font-bold text-slate-600">#{post.position}</span>
+                    <span className="text-sm font-semibold text-slate-700">#{post.position}</span>
                     {getStatusBadge(post.status)}
                     {post.publishedAt && (
                       <span className="text-xs text-slate-500">
@@ -251,7 +250,7 @@ export const ScheduledQueue: React.FC = () => {
                 </div>
                 <button
                   onClick={() => handleDelete(post._id)}
-                  className="ml-4 text-red-600 hover:text-red-800 text-sm font-medium"
+                  className="ml-4 text-red-500 hover:text-red-700 text-sm font-semibold"
                 >
                   Eliminar
                 </button>

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { PipelineBackground } from './PipelineBackground';
 
 export const AuthForm: React.FC = () => {
   const [mode, setMode] = useState<'login' | 'register'>('login');
@@ -35,18 +36,26 @@ export const AuthForm: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-brand-blue to-brand-light-blue p-4">
-      <div className="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Fondo animado */}
+      <PipelineBackground />
+      
+      {/* Formulario */}
+<div className="bg-gradient-to-b from-slate-900/90 to-black/90 backdrop-blur-2xl rounded-3xl shadow-[0_0_40px_rgba(0,255,255,0.1)] p-10 w-full max-w-md relative z-10 border border-cyan-500/10">
         <div className="text-center mb-8">
-          <div className="inline-block bg-brand-dark text-white p-4 rounded-full mb-4">
-            <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M4 21V9.97071C4 9.45838 4.18128 8.96649 4.51001 8.6019L8.6019 4.01001C8.96649 3.18128 9.45838 3 9.97071 3H14.0293C14.5416 3 15.0335 3.18128 15.3981 4.01001L19.4899 8.6019C19.8187 8.96649 20 9.45838 20 9.97071V21H4ZM6 19H8V16H6V19ZM6 14H8V11H6V14ZM10 19H12V16H10V19ZM10 14H12V11H10V14ZM14 19H16V16H14V19ZM14 14H16V11H14V14Z" />
-            </svg>
-          </div>
-          <h2 className="text-3xl font-bold text-brand-dark">
+          <div className="flex justify-center mb-6">
+  <img
+    src="/logo-autoposter.png"  // 👈 pon aquí la ruta real del logo (ver paso 2)
+    alt="Logo AutoPoster"
+    className="w-24 h-24 object-contain drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]"
+  />
+</div>
+
+            <h2 className="text-3xl font-extrabold bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent drop-shadow-[0_0_10px_rgba(0,255,255,0.3)]">
             {mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'}
           </h2>
-          <p className="text-slate-600 mt-2">
+          <p className="text-slate-400 mt-2">
+
             {mode === 'login' 
               ? 'Accede a tu generador de contenido' 
               : 'Configura tu marca una vez, automatiza para siempre'}
@@ -56,14 +65,14 @@ export const AuthForm: React.FC = () => {
         <form onSubmit={handleSubmit} className="space-y-4">
           {mode === 'register' && (
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1">
+              <label className="block text-sm font-medium text-slate-300 mb-1">
                 Nombre
               </label>
               <input
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue"
+                className="w-full px-4 py-3 border border-slate-700 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500 bg-slate-900/80 text-white placeholder-slate-400 transition"
                 placeholder="Tu nombre"
                 required={mode === 'register'}
               />
@@ -71,28 +80,32 @@ export const AuthForm: React.FC = () => {
           )}
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+
               Email
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue"
+              className="w-full px-4 py-3 bg-slate-800/70 border border-cyan-500/20 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-white placeholder-slate-400 transition backdrop-blur-sm"
+
               placeholder="tu@email.com"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">
+            <label className="block text-sm font-medium text-slate-300 mb-1">
+
               Contraseña
             </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-3 border border-slate-300 rounded-lg focus:ring-2 focus:ring-brand-blue focus:border-brand-blue"
+              className="w-full px-4 py-3 bg-slate-800/70 border border-cyan-500/20 rounded-lg focus:ring-2 focus:ring-cyan-400 focus:border-cyan-400 text-white placeholder-slate-400 transition backdrop-blur-sm"
+
               placeholder="Mínimo 8 caracteres"
               minLength={8}
               required
@@ -100,21 +113,28 @@ export const AuthForm: React.FC = () => {
           </div>
 
           {error && (
-            <div className="bg-red-50 border-l-4 border-red-500 p-3 rounded">
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
+            <div className="bg-red-900/30 border-l-4 border-red-500/80 p-3 rounded">
+  <p className="text-sm text-red-300">{error}</p>
+</div>
           )}
 
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full bg-brand-blue hover:bg-brand-dark text-white font-bold py-3 px-4 rounded-lg transition-colors disabled:bg-slate-400 disabled:cursor-not-allowed"
+            className="w-full bg-gradient-to-r from-cyan-500 via-teal-500 to-emerald-500 hover:from-cyan-400 hover:to-emerald-400 text-white font-semibold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-cyan-500/30 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+
           >
-            {isLoading 
-              ? 'Procesando...' 
-              : mode === 'login' 
-                ? 'Iniciar Sesión' 
-                : 'Crear Cuenta'}
+            {isLoading ? (
+              <div className="flex items-center justify-center">
+                <svg className="animate-spin h-5 w-5 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Procesando...
+              </div>
+            ) : (
+              mode === 'login' ? 'Iniciar Sesión' : 'Crear Cuenta'
+            )}
           </button>
         </form>
 
@@ -124,7 +144,8 @@ export const AuthForm: React.FC = () => {
               setMode(mode === 'login' ? 'register' : 'login');
               setError('');
             }}
-            className="text-brand-blue hover:text-brand-dark font-medium"
+            className="font-medium bg-gradient-to-r from-cyan-400 to-teal-400 bg-clip-text text-transparent hover:opacity-80 transition"
+
           >
             {mode === 'login' 
               ? '¿No tienes cuenta? Regístrate' 

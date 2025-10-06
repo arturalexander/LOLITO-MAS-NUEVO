@@ -236,11 +236,13 @@ const MainApp: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-100 font-sans text-slate-800">
-      <div className="bg-white shadow-sm border-b">
-        <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-brand-dark text-white rounded-full flex items-center justify-center text-sm font-bold">
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-cyan-50 to-white font-sans text-slate-800">
+
+      <div className="bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-lg">
+
+        <div className="container mx-auto px-6 py-4 flex justify-between items-center backdrop-blur-md bg-white/80 rounded-xl shadow-sm border border-slate-200">
+          <div className="flex items-center space-x-4">
+            <div className="w-10 h-10 bg-gradient-to-br from-cyan-600 to-blue-700 text-white rounded-full flex items-center justify-center text-base font-bold shadow-md">
               {user?.name.charAt(0).toUpperCase()}
             </div>
             <div>
@@ -248,16 +250,19 @@ const MainApp: React.FC = () => {
               <p className="text-xs text-slate-500">{user?.email}</p>
             </div>
           </div>
+          
+          
           <div className="flex gap-3">
             <button
               onClick={() => setShowBrandingSetup(true)}
-              className="px-4 py-2 text-sm font-medium text-brand-blue hover:bg-blue-50 rounded-lg"
+            className="px-4 py-2 text-sm font-semibold text-cyan-700 bg-cyan-50 hover:bg-cyan-100 border border-cyan-200 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
             >
               ⚙️ Configuración
             </button>
             <button
               onClick={logout}
-              className="px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-lg"
+                className="px-4 py-2 text-sm font-semibold text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-lg transition-all duration-200 shadow-sm hover:shadow-md"
+
             >
               Cerrar Sesión
             </button>
@@ -267,7 +272,8 @@ const MainApp: React.FC = () => {
 
       <main className="container mx-auto px-4 py-8">
         <Header />
-        <div className="mt-8 max-w-4xl mx-auto bg-white p-6 sm:p-8 rounded-2xl shadow-lg">
+        <div className="mt-8 max-w-4xl mx-auto bg-white/80 backdrop-blur-lg border border-slate-200 p-8 rounded-2xl shadow-xl">
+
           <HtmlInputForm onSubmit={handleUrlSubmit} isLoading={isLoading} />
         </div>
 
@@ -275,7 +281,7 @@ const MainApp: React.FC = () => {
           <div className="mt-10 max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-x-10 gap-y-12">
             <div className="space-y-12">
               <section>
-                <h2 className="text-2xl font-bold text-center text-brand-dark mb-6">Imagen de Marketing</h2>
+                <h2 className="text-2xl font-extrabold text-center bg-gradient-to-r from-cyan-600 to-blue-600 bg-clip-text text-transparent drop-shadow-sm mb-6"></h2>
                 {isCreatingImage && <SocialImageSkeleton />}
                 {!isCreatingImage && socialImageUrl && <SocialImageDisplay imageUrl={socialImageUrl} />}
                 {!isCreatingImage && !socialImageUrl && imageCreateError && (
