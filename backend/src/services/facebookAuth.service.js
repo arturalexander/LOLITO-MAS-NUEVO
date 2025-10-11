@@ -80,57 +80,64 @@ class FacebookAuthService {
     }
   }
 
-  static async completeAuthFlow(shortLivedToken, selectedPageId) {
-    try {
-      const longLivedToken = await this.exchangeForLongLivedToken(shortLivedToken);
-      const userData = await this.getUserData(longLivedToken);
-      const pages = await this.getUserPages(longLivedToken);
+static async completeAuthFlow(shortLivedToken, selectedPageId) {
+  try {
+    const longLivedToken = await this.exchangeForLongLivedToken(shortLivedToken);
+    const userData = await this.getUserData(longLivedToken);
+    const pages = await this.getUserPages(longLivedToken);
 
-      if (pages.length === 0) {
-        throw new Error('No Facebook pages found');
-      }
+    if (pages.length === 0) {
+      throw new Error('No Facebook pages found');
+    }
 
-      const selectedPage = selectedPageId 
-        ? pages.find(p => p.id === selectedPageId) || pages[0]
-        : pages[0];
+    const selectedPage = selectedPageId 
+      ? pages.find(p => p.id === selectedPageId) || pages[0]
+      : pages[0];
 
-      // Declarar tokenExpiry AQUÍ, antes de usarlo
-      const tokenExpiry = new Date();
-      tokenExpiry.setDate(tokenExpiry.getDate() + 60);
+    const tokenExpiry = new Date();
+    tokenExpiry.setDate(tokenExpiry.getDate() + 60);
 
-      const instagramAccount = await this.getInstagramAccount(selectedPage.id, selectedPage.access_token);
+    // 🟢 INTENTA conectar Instagram, pero NO falla si no existe
+    const instagramAccount = await this.getInstagramAccount(
+      selectedPage.id, 
+      selectedPage.access_token
+    );
 
-      if (!instagramAccount) {
-        console.warn('No Instagram account found, continuing with Facebook only');
-        return {
-          facebookUserId: userData.id,
-          email: userData.email,
-          pageId: selectedPage.id,
-          pageName: selectedPage.name,
-          pageAccessToken: selectedPage.access_token,
-          userAccessToken: longLivedToken,
-          tokenExpiry,
-          availablePages: pages.map(p => ({ id: p.id, name: p.name })),
-        };
-      }
+    // 🟢 Prepara datos base (solo Facebook)
+    const baseData = {
+      facebookUserId: userData.id,
+      email: userData.email,
+      pageId: selectedPage.id,
+      pageName: selectedPage.name,
+      pageAccessToken: selectedPage.access_token,
+      userAccessToken: longLivedToken,
+      tokenExpiry,
+      availablePages: pages.map(p => ({ id: p.id, name: p.name })),
+    };
 
+    // 🟢 Si existe Instagram, añade los datos
+    if (instagramAccount) {
+      console.log(`✅ Instagram conectado: @${instagramAccount.username}`);
       return {
-        facebookUserId: userData.id,
-        email: userData.email,
-        pageId: selectedPage.id,
-        pageName: selectedPage.name,
-        pageAccessToken: selectedPage.access_token,
+        ...baseData,
         instagramAccountId: instagramAccount.id,
         instagramUsername: instagramAccount.username,
-        userAccessToken: longLivedToken,
-        tokenExpiry,
-        availablePages: pages.map(p => ({ id: p.id, name: p.name })),
       };
-    } catch (error) {
-      console.error('Auth flow error:', error.message);
-      throw error;
     }
+
+    // 🟢 Si NO existe Instagram, continúa sin él
+    console.warn('⚠️ Instagram no encontrado, continuando solo con Facebook');
+    return {
+      ...baseData,
+      instagramAccountId: null,
+      instagramUsername: null,
+    };
+
+  } catch (error) {
+    console.error('Auth flow error:', error.message);
+    throw error;
   }
+}
 }
 
 module.exports = FacebookAuthService;

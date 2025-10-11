@@ -148,14 +148,14 @@ const MainApp: React.FC = () => {
       }
         
       try {
-        const post = await generatePost(html, url);
-        setSocialPost(post);
-        setIsGenerating(false);
+  const post = await generatePost(html, url, user?.language || 'en'); // 🟢 PASAR IDIOMA
+  setSocialPost(post);
+  setIsGenerating(false);
 
-        try {
-          const summary = await generateShortSummary(post);
-          setShortSummary(summary);
-          setIsSummarizing(false);
+  try {
+    const summary = await generateShortSummary(post, user?.language || 'en'); // 🟢 PASAR IDIOMA
+    setShortSummary(summary);
+    setIsSummarizing(false);
 
           if (extractedUrls.length > 0 && user) {
             try {

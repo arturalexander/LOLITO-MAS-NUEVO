@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../contexts/AuthContext';
+import { LinkExtractor } from './LinkExtractor';
 
 const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 
   'https://wonderful-stillness-production-6167.up.railway.app';
@@ -133,6 +134,27 @@ export const ScheduledQueue: React.FC = () => {
     }
   };
 
+  // 🟢 NUEVA FUNCIÓN: Limpiar TODO
+  const handleClearAll = async () => {
+    if (!confirm(`⚠️ ¿Estás seguro de eliminar TODOS los ${stats?.total || 0} posts de la cola?\n\nEsto incluye pendientes, publicados y con errores.`)) return;
+
+    try {
+      const token = localStorage.getItem('authToken');
+      const response = await fetch(`${BACKEND_URL}/api/scheduled-posts/cleanup/all`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (!response.ok) throw new Error('Error al limpiar todo');
+
+      const data = await response.json();
+      setMessage({ type: 'success', text: data.message || 'Cola limpiada completamente' });
+      loadQueue();
+    } catch (error: any) {
+      setMessage({ type: 'error', text: error.message });
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'pending':
@@ -148,7 +170,6 @@ export const ScheduledQueue: React.FC = () => {
 
   return (
     <div className="space-y-8">
-
       {/* Estadísticas */}
       <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
         <h2 className="text-2xl font-extrabold text-slate-800 mb-4">📊 Cola de Publicaciones Programadas</h2>
@@ -173,9 +194,12 @@ export const ScheduledQueue: React.FC = () => {
         )}
       </div>
 
-      {/* Añadir URLs */}
+      {/* Extractor Automático */}
+      <LinkExtractor onSuccess={loadQueue} />
+
+      {/* Añadir URLs Manualmente */}
       <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
-        <h3 className="text-xl font-bold text-slate-800 mb-4">➕ Añadir URLs a la Cola</h3>
+        <h3 className="text-xl font-bold text-slate-800 mb-4">➕ Añadir URLs Manualmente</h3>
         <p className="text-sm text-slate-600 mb-4">
           Escribe una URL por línea. Se publicarán en orden (1 por día).
         </p>
@@ -183,7 +207,7 @@ export const ScheduledQueue: React.FC = () => {
         <textarea
           value={urls}
           onChange={(e) => setUrls(e.target.value)}
-          placeholder="https://www.ejemplo.com/propiedad-1\nhttps://www.ejemplo.com/propiedad-2"
+          placeholder="https://www.ejemplo.com/propiedad-1&#10;https://www.ejemplo.com/propiedad-2"
           className="w-full h-40 px-4 py-3 bg-white/70 border border-slate-200 rounded-xl shadow-inner focus:ring-2 focus:ring-brand-blue resize-none font-mono text-sm"
           disabled={isLoading}
         />
@@ -197,24 +221,37 @@ export const ScheduledQueue: React.FC = () => {
         <button
           onClick={handleAddUrls}
           disabled={isLoading || !urls.trim()}
-          className="mt-4 w-full py-3 bg-gradient-to-r from-brand-blue to-brand-dark hover:opacity-90 text-white font-semibold rounded-xl shadow-lg transition-all duration-300"
+          className="mt-4 w-full py-3 bg-gradient-to-r from-brand-blue to-brand-dark hover:opacity-90 text-white font-semibold rounded-xl shadow-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isLoading ? 'Añadiendo...' : 'Añadir a la Cola'}
         </button>
       </div>
 
-      {/* Lista */}
+      {/* Lista de Posts */}
       <div className="bg-white/30 backdrop-blur-xl border border-white/20 rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.1)] hover:shadow-[0_8px_40px_rgba(0,0,0,0.15)] transition-all duration-500 p-6">
-        <div className="flex justify-between items-center mb-4">
+        <div className="flex flex-wrap justify-between items-center gap-3 mb-4">
           <h3 className="text-xl font-bold text-slate-800">🗂️ Posts en Cola</h3>
-          {stats && stats.published > 0 && (
-            <button
-              onClick={handleCleanup}
-              className="text-sm text-red-600 hover:text-red-800 font-medium"
-            >
-              Limpiar publicados
-            </button>
-          )}
+          
+          {/* 🟢 BOTONES DE LIMPIEZA */}
+          <div className="flex gap-2">
+            {stats && stats.published > 0 && (
+              <button
+                onClick={handleCleanup}
+                className="text-sm bg-orange-100 hover:bg-orange-200 text-orange-700 font-medium px-4 py-2 rounded-lg transition"
+              >
+                🧹 Limpiar Publicados ({stats.published})
+              </button>
+            )}
+            
+            {stats && stats.total > 0 && (
+              <button
+                onClick={handleClearAll}
+                className="text-sm bg-red-100 hover:bg-red-200 text-red-700 font-semibold px-4 py-2 rounded-lg transition"
+              >
+                🗑️ Limpiar TODO ({stats.total})
+              </button>
+            )}
+          </div>
         </div>
 
         {isLoadingQueue ? (

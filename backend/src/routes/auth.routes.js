@@ -142,7 +142,7 @@ router.post('/link-facebook', authenticateUser, async (req, res) => {
 // ========== Actualizar configuración de marca ==========
 router.patch('/profile/branding', authenticateUser, async (req, res) => {
   try {
-    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish, scheduledTime } = req.body;
+    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish, scheduledTime, language } = req.body;
 
     const user = req.user;
 
@@ -152,6 +152,7 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
     if (brandImageUrl !== undefined) user.brandImageUrl = brandImageUrl;
     if (autoPublish !== undefined) user.autoPublish = autoPublish;
     if (scheduledTime) user.scheduledTime = scheduledTime;
+    if (language) user.language = language; // 🟢 AÑADIR
 
     await user.save();
 
@@ -167,6 +168,8 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
         brandImageUrl: user.brandImageUrl,
         autoPublish: user.autoPublish,
         scheduledTime: user.scheduledTime,
+        language: user.language, // 🟢 AÑADIR
+
       },
     });
   } catch (error) {

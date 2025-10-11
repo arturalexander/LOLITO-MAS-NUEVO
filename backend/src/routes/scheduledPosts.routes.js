@@ -8,8 +8,7 @@ const FacebookService = require('../services/facebook.service');
 const { uploadBase64Image } = require('../utils/imageUpload');
 const { extractImageUrls } = require('../utils/assetExtractor');
 const { createSocialImage } = require('../utils/imageGenerator');
-
-
+const { smartExtractPropertyLinks } = require('../utils/linkExtractor'); // ✅ MOVER AQUÍ
 
 const router = express.Router();
 
@@ -120,6 +119,129 @@ router.delete('/cleanup/published', authenticateUser, async (req, res) => {
   }
 });
 
+// 🟢 NUEVA RUTA: Extraer links de una página
+router.post('/extract-links', authenticateUser, async (req, res) => {
+  try {
+    const { url } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    console.log(`[EXTRACT] Extracting links from: ${url}`);
+
+    // Usar el mismo proxy que usas para extraer imágenes
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const response = await fetch(`${PROXY_URL}${encodeURIComponent(url)}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch page: ${response.status}`);
+    }
+
+    const html = await response.text();
+    
+    // Extraer links de propiedades
+    const propertyLinks = smartExtractPropertyLinks(html, url);
+
+    console.log(`[EXTRACT] Found ${propertyLinks.length} property links`);
+
+    res.json({
+      success: true,
+      url,
+      totalLinks: propertyLinks.length,
+      links: propertyLinks,
+    });
+
+  } catch (error) {
+    console.error('[EXTRACT] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to extract links',
+      details: error.message 
+    });
+  }
+});
+
+// 🟢 NUEVA RUTA: Extraer y añadir links directamente a la cola
+router.post('/extract-and-add', authenticateUser, async (req, res) => {
+  try {
+    const { 
+      url, 
+      limit = 50,
+      useAdvanced = false, // Opción para usar detección avanzada
+      cleanUrls = true      // Limpiar query params
+    } = req.body;
+
+    if (!url) {
+      return res.status(400).json({ error: 'URL is required' });
+    }
+
+    const user = req.user;
+
+    console.log(`[EXTRACT+ADD] Processing: ${url}`);
+
+    // Extraer HTML
+    const PROXY_URL = 'https://corsproxy.io/?';
+    const response = await fetch(`${PROXY_URL}${encodeURIComponent(url)}`);
+
+    if (!response.ok) {
+      throw new Error(`Failed to fetch page: ${response.status}`);
+    }
+
+    const html = await response.text();
+    
+    // Usar versión básica o avanzada
+    const extractFunction = useAdvanced ? extractPropertyLinksAdvanced : smartExtractPropertyLinks;
+    const propertyLinks = extractFunction(html, url, { cleanUrls });
+
+    if (propertyLinks.length === 0) {
+      return res.status(404).json({ 
+        error: 'No property links found',
+        message: 'No se encontraron links de propiedades. Intenta con useAdvanced=true',
+        suggestion: 'Puede que esta página tenga una estructura diferente'
+      });
+    }
+
+    // Limitar cantidad
+    const linksToAdd = propertyLinks.slice(0, limit);
+
+    // Resto del código para añadir a la cola...
+    const lastPost = await ScheduledPost.findOne({ userId: user._id })
+      .sort({ position: -1 })
+      .limit(1);
+
+    let startPosition = lastPost ? lastPost.position + 1 : 1;
+
+    const scheduledPosts = linksToAdd.map((link, index) => ({
+      userId: user._id,
+      url: link,
+      scheduledTime: user.scheduledTime || '14:00',
+      position: startPosition + index,
+      status: 'pending',
+    }));
+
+    await ScheduledPost.insertMany(scheduledPosts);
+
+    console.log(`[EXTRACT+ADD] Added ${linksToAdd.length} links to queue`);
+
+    res.json({
+      success: true,
+      message: `${linksToAdd.length} propiedades añadidas a la cola`,
+      totalFound: propertyLinks.length,
+      added: linksToAdd.length,
+      skipped: propertyLinks.length - linksToAdd.length,
+      startPosition,
+    });
+
+  } catch (error) {
+    console.error('[EXTRACT+ADD] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to extract and add links',
+      details: error.message 
+    });
+  }
+});
+
+
 // Endpoint para procesar posts programados (llamado por cron-job.org)
 router.post('/process', async (req, res) => {
   try {
@@ -229,14 +351,21 @@ async function processScheduledPost(post, user) {
       throw new Error('No images found');
     }
 
+    
+
     // 2. Generar post si no existe
     if (!post.socialPost) {
       console.log(`[PROCESS] Generating content with AI`);
       const response = await fetch(`${proxyUrl}${encodeURIComponent(post.url)}`);
       const html = await response.text();
+
+      post.socialPost = await generatePost(html, post.url, user.language || 'en');
+      post.shortSummary = await generateShortSummary(post.socialPost, user.language || 'en');
+      await post.save();
+    
       
-      post.socialPost = await generatePost(html, post.url);
-      post.shortSummary = await generateShortSummary(post.socialPost);
+      post.socialPost = await generatePost(html, post.url, user.language || 'en'); // 🟢 PASAR IDIOMA
+      post.shortSummary = await generateShortSummary(post.socialPost, user.language || 'en'); // 🟢 PASAR IDIOMA
       await post.save();
     }
 
@@ -307,5 +436,28 @@ async function processScheduledPost(post, user) {
     };
   }
 }
+// 🟢 NUEVA RUTA: Limpiar TODOS los posts (pendientes, publicados, errores)
+router.delete('/cleanup/all', authenticateUser, async (req, res) => {
+  try {
+    const user = req.user;
 
+    // Eliminar TODOS los posts del usuario
+    const result = await ScheduledPost.deleteMany({ userId: user._id });
+
+    console.log(`[CLEANUP] Deleted ${result.deletedCount} posts for user ${user.email}`);
+
+    res.json({
+      success: true,
+      message: `${result.deletedCount} posts eliminados de la cola`,
+      deletedCount: result.deletedCount,
+    });
+
+  } catch (error) {
+    console.error('[CLEANUP] Error:', error);
+    res.status(500).json({ 
+      error: 'Failed to clear queue',
+      details: error.message 
+    });
+  }
+});
 module.exports = router;

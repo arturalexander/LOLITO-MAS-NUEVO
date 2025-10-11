@@ -16,6 +16,14 @@ const userProfileSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
+  
+  // 🟢 AÑADIR IDIOMA
+  language: {
+    type: String,
+    enum: ['es', 'en', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ru'],
+    default: 'en',
+  },
+  
   // Configuración de marca
   brandColors: {
     color1: {
@@ -39,20 +47,26 @@ const userProfileSchema = new mongoose.Schema({
     type: String,
     default: null,
   },
-  // ✅ Modo automático
+  textColor: {
+    type: String,
+    default: '#ffffff',
+  },
+  
+  // Modo automático
   autoPublish: {
     type: Boolean,
     default: false,
   },
+  scheduledTime: {
+    type: String,
+    default: '14:00',
+  },
+  
   // Relación con Facebook/Instagram
   facebookUserId: {
     type: String,
     default: null,
   },
-  scheduledTime: {
-  type: String,
-  default: '14:00', // Hora por defecto
-},
   pageId: {
     type: String,
     default: null,

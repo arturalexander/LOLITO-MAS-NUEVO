@@ -11,8 +11,10 @@ interface User {
   brandFont: string;
   brandLogoUrl: string | null;
   brandImageUrl: string | null;
-  autoPublish: boolean; // ✅ Nuevo
-  scheduledTime: string; // Añade esta línea
+  textColor: string;
+  autoPublish: boolean;
+  scheduledTime: string;
+  language: string; // 🟢 AÑADIR
   instagramUsername?: string;
   pageName?: string;
 }
