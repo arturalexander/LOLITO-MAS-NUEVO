@@ -140,9 +140,20 @@ router.post('/link-facebook', authenticateUser, async (req, res) => {
 });
 
 // ========== Actualizar configuración de marca ==========
+// ========== Actualizar configuración de marca ==========
 router.patch('/profile/branding', authenticateUser, async (req, res) => {
   try {
-    const { brandColors, brandFont, brandLogoUrl, brandImageUrl, autoPublish, scheduledTime, language } = req.body;
+    const { 
+      brandColors, 
+      brandFont, 
+      brandLogoUrl, 
+      brandImageUrl, 
+      autoPublish, 
+      scheduledTime, 
+      language,
+      phoneNumber, // 🟢 AÑADIR
+      textColor     // 🟢 AÑADIR
+    } = req.body;
 
     const user = req.user;
 
@@ -152,7 +163,9 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
     if (brandImageUrl !== undefined) user.brandImageUrl = brandImageUrl;
     if (autoPublish !== undefined) user.autoPublish = autoPublish;
     if (scheduledTime) user.scheduledTime = scheduledTime;
-    if (language) user.language = language; // 🟢 AÑADIR
+    if (language) user.language = language;
+    if (phoneNumber) user.phoneNumber = phoneNumber; // 🟢 AÑADIR
+    if (textColor) user.textColor = textColor;       // 🟢 AÑADIR
 
     await user.save();
 
@@ -168,8 +181,9 @@ router.patch('/profile/branding', authenticateUser, async (req, res) => {
         brandImageUrl: user.brandImageUrl,
         autoPublish: user.autoPublish,
         scheduledTime: user.scheduledTime,
-        language: user.language, // 🟢 AÑADIR
-
+        language: user.language,
+        phoneNumber: user.phoneNumber, // 🟢 AÑADIR
+        textColor: user.textColor,     // 🟢 AÑADIR
       },
     });
   } catch (error) {

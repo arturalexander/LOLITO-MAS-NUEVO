@@ -17,7 +17,7 @@ const LANGUAGE_NAMES = {
 };
 
 // 🟢 FUNCIÓN PARA GENERAR SYSTEM INSTRUCTION SEGÚN IDIOMA
-function getSystemInstruction(language = 'en') {
+function getSystemInstruction(language = 'en', phoneNumber = '+34 697897156') {
   const languageName = LANGUAGE_NAMES[language] || 'English (UK)';
   
   return `Act as an expert Community Manager for real-estate Facebook Pages. Create a viral-style post that drives engagement (likes, comments, shares).
@@ -61,7 +61,7 @@ Link (mandatory, its own line):
 {The original URL of the page that will be provided in the prompt}
 
 Phone (mandatory, final line):
-+34 697897156
+${phoneNumber}
 
 Hashtags:
 Only if none exist in the input; add 3–5 strong, Facebook-optimized real-estate hashtags (brand/location/property type). Use CamelCase, no accents, no spaces.
@@ -88,7 +88,38 @@ Rules:
 - Do not include quotes, extra text, HTML, or Markdown. Return ONLY the content with the <br> separators.
 - Everything must be in ${languageName}.`;
 }
+// 🟢 GENERAR POST CON IDIOMA Y TELÉFONO
+async function generatePost(htmlContent, url, language = 'en', phoneNumber = '+34 697897156') {
+  try {
+    const prompt = `The original URL for this content is: ${url}. Please generate the social media post based on the following HTML content. Ignore any additional content on the page and focus only on the first property listed.\n\nHTML CONTENT:\n${htmlContent}`;
 
+    const response = await fetch(`${GEMINI_API_URL}?key=${GEMINI_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        systemInstruction: { parts: [{ text: getSystemInstruction(language, phoneNumber) }] }, // 🟢 PASAR TELÉFONO
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 1024,
+        }
+      })
+    });
+
+    const data = await response.json();
+    
+    if (!response.ok) {
+      throw new Error(data.error?.message || 'Gemini API error');
+    }
+
+    return data.candidates[0].content.parts[0].text;
+  } catch (error) {
+    console.error('Error generating post:', error);
+    throw new Error(`Failed to generate post: ${error.message}`);
+  }
+}
+
+module.exports = { generatePost, generateShortSummary };
 // 🟢 GENERAR POST CON IDIOMA
 async function generatePost(htmlContent, url, language = 'en') {
   try {

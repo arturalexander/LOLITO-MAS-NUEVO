@@ -35,16 +35,22 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
   
   const [color1, setColor1] = useState(user?.brandColors.color1 || '#0077b6');
   const [color2, setColor2] = useState(user?.brandColors.color2 || '#00b4d8');
+  
+  // 🟢 COLORES PERSONALIZADOS
+  const [customColor1, setCustomColor1] = useState('#0077b6');
+  const [customColor2, setCustomColor2] = useState('#00b4d8');
+  
   const [font, setFont] = useState(user?.brandFont || 'Inter');
   const [logoFile, setLogoFile] = useState<string | null>(user?.brandLogoUrl || null);
   const [brandImageFile, setBrandImageFile] = useState<string | null>(user?.brandImageUrl || null);
   const [autoPublish, setAutoPublish] = useState(user?.autoPublish || false);
   const [scheduledTime, setScheduledTime] = useState(user?.scheduledTime || '14:00');
   const [textColor, setTextColor] = useState(user?.textColor || '#ffffff');
-  const [language, setLanguage] = useState(user?.language || 'en'); // 🟢 IDIOMA
+  const [language, setLanguage] = useState(user?.language || 'en');
+  const [phoneNumber, setPhoneNumber] = useState(user?.phoneNumber || '+34 697897156');
   
-  const [isLoading, setIsLoading] = useState(false); // 🟢 FALTABA ESTO
-  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null); // 🟢 FALTABA ESTO
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -57,6 +63,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
       setScheduledTime(user.scheduledTime || '14:00');
       setTextColor(user.textColor || '#ffffff');
       setLanguage(user.language || 'en');
+      setPhoneNumber(user.phoneNumber || '+34 697897156');
     }
   }, [user]);
 
@@ -95,7 +102,8 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
         autoPublish,
         scheduledTime,
         textColor,
-        language, // 🟢 INCLUIR IDIOMA
+        language,
+        phoneNumber,
       });
 
       setMessage({ type: 'success', text: 'Configuración guardada exitosamente' });
@@ -183,10 +191,10 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
                   Identidad Visual
                 </h2>
 
-                {/* Estilo de Degradado */}
+                {/* 🟢 DEGRADADOS PREDEFINIDOS */}
                 <div className="mb-6">
                   <label className="text-sm font-medium text-slate-600 mb-3 block">
-                    Estilo de Degradado
+                    Estilo de Degradado Predefinido
                   </label>
 
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
@@ -218,6 +226,66 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
                         </span>
                       </button>
                     ))}
+                  </div>
+                </div>
+
+                {/* 🟢 DEGRADADO PERSONALIZADO */}
+                <div className="mb-6 p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl border-2 border-purple-200">
+                  <label className="text-sm font-medium text-purple-800 mb-3 block flex items-center gap-2">
+                    <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z"/>
+                    </svg>
+                    Degradado Personalizado
+                  </label>
+
+                  <div className="grid grid-cols-2 gap-3 mb-3">
+                    <div>
+                      <label className="block text-xs font-medium text-purple-700 mb-1">Color 1</label>
+                      <input
+                        type="color"
+                        value={customColor1}
+                        onChange={(e) => setCustomColor1(e.target.value)}
+                        className="w-full h-10 rounded-lg cursor-pointer border border-purple-300"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-medium text-purple-700 mb-1">Color 2</label>
+                      <input
+                        type="color"
+                        value={customColor2}
+                        onChange={(e) => setCustomColor2(e.target.value)}
+                        className="w-full h-10 rounded-lg cursor-pointer border border-purple-300"
+                      />
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setColor1(customColor1);
+                      setColor2(customColor2);
+                    }}
+                    className="w-full py-2 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white font-semibold rounded-lg transition-all shadow-md"
+                    style={{
+                      background: `linear-gradient(90deg, ${customColor1}, ${customColor2})`,
+                    }}
+                  >
+                    Aplicar Degradado Personalizado
+                  </button>
+                </div>
+
+                {/* 🟢 COLOR DEL TEXTO */}
+                <div className="mb-6">
+                  <label className="text-sm font-medium text-slate-600 mb-2 block">
+                    Color del Texto
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="color"
+                      value={textColor}
+                      onChange={(e) => setTextColor(e.target.value)}
+                      className="w-20 h-10 border border-slate-300 rounded-lg cursor-pointer shadow-sm"
+                    />
+                    <span className="text-sm text-slate-600">{textColor}</span>
                   </div>
                 </div>
 
@@ -258,17 +326,21 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
                   </p>
                 </div>
 
-                {/* Color del texto */}
+                {/* 🟢 TELÉFONO PERSONALIZADO */}
                 <div className="mb-6">
                   <label className="text-sm font-medium text-slate-600 mb-2 block">
-                    Color del texto
+                    Número de Teléfono
                   </label>
                   <input
-                    type="color"
-                    value={textColor}
-                    onChange={(e) => setTextColor(e.target.value)}
-                    className="w-20 h-10 border border-slate-300 rounded-lg cursor-pointer shadow-sm"
+                    type="tel"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    placeholder="+34 697897156"
+                    className="w-full px-4 py-3 border border-slate-200 rounded-xl shadow-sm focus:ring-2 focus:ring-cyan-500 transition-all"
                   />
+                  <p className="text-xs text-slate-500 mt-2">
+                    Este teléfono aparecerá en todas tus publicaciones automáticas
+                  </p>
                 </div>
 
                 {/* Logo */}
@@ -395,7 +467,7 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
               </button>
             </div>
 
-            {/* DERECHA (Vista previa) */}
+            {/* DERECHA - Vista Previa */}
             <div className="bg-white/90 border border-slate-200 rounded-3xl shadow-xl p-6 backdrop-blur-lg hover:shadow-2xl transition-all">
               <h2 className="text-2xl font-bold text-slate-800 mb-4">Vista Previa</h2>
               
@@ -422,10 +494,10 @@ export const BrandingSetup: React.FC<BrandingSetupProps> = ({ onComplete }) => {
                   )}
 
                   <div className="text-3xl font-extrabold leading-snug tracking-tight drop-shadow-[0_3px_10px_rgba(0,0,0,0.5)]">
-                    😂 Villa en Venta <br />
-                    Torrevieja, España <br />
-                    299.000 € <br />
-                    Piscina incluida
+                    🏠 Villa en Venta <br />
+                    📍 Torrevieja, España <br />
+                    💶 299.000 € <br />
+                    ✨ Piscina incluida
                   </div>
                 </div>
               </div>

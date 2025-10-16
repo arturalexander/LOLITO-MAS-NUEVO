@@ -351,23 +351,70 @@ async function processScheduledPost(post, user) {
       throw new Error('No images found');
     }
 
-    
-
     // 2. Generar post si no existe
     if (!post.socialPost) {
       console.log(`[PROCESS] Generating content with AI`);
       const response = await fetch(`${proxyUrl}${encodeURIComponent(post.url)}`);
       const html = await response.text();
 
-      post.socialPost = await generatePost(html, post.url, user.language || 'en');
-      post.shortSummary = await generateShortSummary(post.socialPost, user.language || 'en');
-      await post.save();
-    
+      // 🟢 PASAR IDIOMA Y TELÉFONO
+      post.socialPost = await generatePost(
+        html, 
+        post.url, 
+        user.language || 'en', 
+        user.phoneNumber || '+34 697897156'
+      );
       
-      post.socialPost = await generatePost(html, post.url, user.language || 'en'); // 🟢 PASAR IDIOMA
-      post.shortSummary = await generateShortSummary(post.socialPost, user.language || 'en'); // 🟢 PASAR IDIOMA
+      post.shortSummary = await generateShortSummary(
+        post.socialPost, 
+        user.language || 'en'
+      );
+      
       await post.save();
     }
+
+    // 3. Generar imagen de marketing si no existe
+    if (!post.socialImageUrl) {
+      console.log(`[PROCESS] Generating marketing image`);
+      post.socialImageUrl = await createSocialImage(
+        post.imageUrls[0],
+        post.shortSummary,
+        {
+          colors: user.brandColors || { color1: '#0077b6', color2: '#00b4d8' },
+          font: user.brandFont || 'Inter',
+          logo: user.brandLogoUrl || null,
+        }
+      );
+      await post.save();
+    }
+
+    if (post.imageUrls.length === 0) {
+      throw new Error('No images found');
+    }
+
+    
+
+    // 2. Generar post si no existe
+    if (!post.socialPost) {
+  console.log(`[PROCESS] Generating content with AI`);
+  const response = await fetch(`${proxyUrl}${encodeURIComponent(post.url)}`);
+  const html = await response.text();
+
+  // 🟢 PASAR IDIOMA Y TELÉFONO
+  post.socialPost = await generatePost(
+    html, 
+    post.url, 
+    user.language || 'en', 
+    user.phoneNumber || '+34 697897156'
+  );
+  
+  post.shortSummary = await generateShortSummary(
+    post.socialPost, 
+    user.language || 'en'
+  );
+  
+  await post.save();
+}
 
     // 3. Generar imagen de marketing si no existe
     if (!post.socialImageUrl) {

@@ -42,66 +42,94 @@ const MainApp: React.FC = () => {
   const [hasProcessed, setHasProcessed] = useState<boolean>(false);
 
   const autoPublishToFacebook = async (
-    socialImageUrl: string, 
-    socialPost: string, 
-    imageUrls: string[]
-  ) => {
-    if (!user?.autoPublish || !user?.pageName) {
-      return;
-    }
+  socialImageUrl: string, 
+  socialPost: string, 
+  imageUrls: string[]
+) => {
+  if (!user?.autoPublish || !user?.pageName) {
+    return;
+  }
 
-    setIsAutoPublishing(true);
-    setAutoPublishError(null);
+  setIsAutoPublishing(true);
+  setAutoPublishError(null);
 
-    try {
-      console.log('🚀 Publicación automática iniciada...');
-      
-      const carouselImages = [socialImageUrl, ...imageUrls.slice(0, 3)];
+  try {
+    console.log('🚀 Publicación automática iniciada...');
+    
+    const carouselImages = [socialImageUrl, ...imageUrls.slice(0, 3)];
 
-      if (user?.brandImageUrl) {
-        try {
-          if (user.brandImageUrl.startsWith('data:')) {
-            const brandImageUrl = await uploadBase64Image(user.brandImageUrl);
-            carouselImages.push(brandImageUrl);
-          } else {
-            carouselImages.push(user.brandImageUrl);
-          }
-        } catch (uploadError) {
-          console.warn('Error al subir imagen de marca, continuando sin ella:', uploadError);
+    // Añadir imagen de marca si existe
+    if (user?.brandImageUrl) {
+      try {
+        if (user.brandImageUrl.startsWith('data:')) {
+          const brandImageUrl = await uploadBase64Image(user.brandImageUrl);
+          carouselImages.push(brandImageUrl);
+        } else {
+          carouselImages.push(user.brandImageUrl);
         }
+      } catch (uploadError) {
+        console.warn('Error al subir imagen de marca, continuando sin ella:', uploadError);
       }
-
-      await PostService.publishToFacebook(carouselImages, socialPost);
-      
-      console.log('✅ Publicado automáticamente en Facebook');
-      
-      // Mostrar notificación de éxito
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-bounce';
-      notification.innerHTML = '✅ ¡Publicado automáticamente en Facebook!';
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-      
-    } catch (error: any) {
-      console.error('Error en publicación automática:', error);
-      setAutoPublishError(error.message || 'Error al publicar automáticamente');
-      
-      // Mostrar notificación de error
-      const notification = document.createElement('div');
-      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
-      notification.innerHTML = `❌ Error en publicación automática: ${error.message}`;
-      document.body.appendChild(notification);
-      
-      setTimeout(() => {
-        notification.remove();
-      }, 5000);
-    } finally {
-      setIsAutoPublishing(false);
     }
-  };
+
+    const results: any = { facebook: null, instagram: null };
+
+    // 🔵 Publicar en Facebook
+    console.log('📘 Publicando en Facebook...');
+    try {
+      const fbResult = await PostService.publishToFacebook(carouselImages, socialPost);
+      results.facebook = fbResult;
+      console.log('✅ Facebook publicado:', fbResult);
+    } catch (error: any) {
+      console.error('❌ Error en Facebook:', error);
+      results.facebook = { error: error.message };
+    }
+
+    // 🟣 Publicar en Instagram (solo si está conectado)
+    if (user?.instagramUsername) {
+      console.log('📸 Publicando en Instagram...');
+      try {
+        const igResult = await PostService.publishToInstagram(carouselImages, socialPost);
+        results.instagram = igResult;
+        console.log('✅ Instagram publicado:', igResult);
+      } catch (error: any) {
+        console.error('❌ Error en Instagram:', error);
+        results.instagram = { error: error.message };
+      }
+    } else {
+      console.log('⚠️ Instagram no conectado, saltando...');
+    }
+
+    // Mostrar notificación según resultados
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-4 rounded-lg shadow-lg z-50 animate-bounce';
+    
+    if (results.facebook && !results.facebook.error && results.instagram && !results.instagram.error) {
+      notification.innerHTML = '✅ ¡Publicado automáticamente en Facebook e Instagram!';
+    } else if (results.facebook && !results.facebook.error) {
+      notification.innerHTML = '✅ Publicado en Facebook' + (results.instagram?.error ? ' ⚠️ (Instagram falló)' : '');
+    } else {
+      notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+      notification.innerHTML = '❌ Error en publicación automática';
+    }
+    
+    document.body.appendChild(notification);
+    setTimeout(() => notification.remove(), 5000);
+    
+  } catch (error: any) {
+    console.error('Error en publicación automática:', error);
+    setAutoPublishError(error.message || 'Error al publicar automáticamente');
+    
+    const notification = document.createElement('div');
+    notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-4 rounded-lg shadow-lg z-50';
+    notification.innerHTML = `❌ Error: ${error.message}`;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => notification.remove(), 5000);
+  } finally {
+    setIsAutoPublishing(false);
+  }
+};
 
   const handleUrlSubmit = useCallback(async (url: string) => {
     if (!url) {

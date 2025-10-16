@@ -17,11 +17,16 @@ const userProfileSchema = new mongoose.Schema({
     required: true,
   },
   
-  // 🟢 AÑADIR IDIOMA
   language: {
     type: String,
     enum: ['es', 'en', 'fr', 'de', 'it', 'pt', 'nl', 'pl', 'ru'],
     default: 'en',
+  },
+  
+  // 🟢 AÑADIR TELÉFONO
+  phoneNumber: {
+    type: String,
+    default: '+34 697897156',
   },
   
   // Configuración de marca
