@@ -1,7 +1,7 @@
 const fetch = require('node-fetch');
 
-const HCTI_USER_ID = process.env.HCTI_USER_ID || "5df328f2-b21a-466c-ad02-5ebab370627d";
-const HCTI_API_KEY = process.env.HCTI_API_KEY || "b1640222-f0ee-4183-92c2-806a9e8037b2";
+const HCTI_USER_ID = process.env.HCTI_USER_ID || "a5ed4716-ffcf-4ac2-b2dd-e20540303ba3";
+const HCTI_API_KEY = process.env.HCTI_API_KEY || "1c51b53b-8a21-45fc-928b-16c282ae808b";
 const HCTI_API_ENDPOINT = 'https://hcti.io/v1/image';
 
 const HTML_TEMPLATE = `

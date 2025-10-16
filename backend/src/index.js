@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const fetch = require('node-fetch');
 require('dotenv').config();
 
 const app = express();
@@ -15,7 +16,6 @@ app.use(cors({
       'https://auto-poster-flax.vercel.app'
     ];
     
-    // Permitir requests sin origin (como Postman) o dominios permitidos
     if (!origin) {
       return callback(null, true);
     }
@@ -24,7 +24,6 @@ app.use(cors({
       return callback(null, true);
     }
     
-    // ✅ NO lanzar error, solo no permitir
     return callback(null, false);
   },
   credentials: true,
@@ -32,9 +31,60 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// ✅ Aumentar límite de payload para imágenes base64
+// ✅ Aumentar límite de payload
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ✅ PROXY PARA IMÁGENES (ANTES DE LAS RUTAS)
+// ✅ PROXY PARA IMÁGENES (ANTES DE LAS RUTAS)
+app.get('/proxy/image/:hash', async (req, res) => {
+  try {
+    const { url } = req.query;
+    
+    if (!url) {
+      return res.status(400).send('URL required');
+    }
+    
+    console.log('[PROXY] Fetching:', url);
+    
+    // Seguir redirects automáticamente
+    const response = await fetch(url, {
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Accept': 'image/jpeg,image/jpg,image/png,image/*',
+        'Referer': 'https://www.azulvilla.pl/'
+      },
+      redirect: 'follow', // ✅ Seguir redirects
+      follow: 5 // Máximo 5 redirects
+    });
+    
+    if (!response.ok) {
+      console.error('[PROXY] Failed:', response.status);
+      return res.status(response.status).send('Failed to fetch image');
+    }
+    
+    // Obtener tipo de contenido real
+    const contentType = response.headers.get('content-type') || 'image/jpeg';
+    
+    // Headers correctos para Instagram/Facebook
+    res.set({
+      'Content-Type': contentType,
+      'Cache-Control': 'public, max-age=31536000, immutable',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, OPTIONS',
+      'X-Content-Type-Options': 'nosniff'
+    });
+    
+    // Stream la imagen directamente
+    response.body.pipe(res);
+    
+    console.log('[PROXY] ✅ Image proxied successfully');
+    
+  } catch (error) {
+    console.error('[PROXY] Error:', error.message);
+    res.status(500).send('Proxy error: ' + error.message);
+  }
+});
 
 app.get('/health', (req, res) => {
   res.json({ 
@@ -53,7 +103,7 @@ const scheduledPostsRoutes = require('./routes/scheduledPosts.routes');
 app.use('/api/auth', authRoutes);
 app.use('/api/facebook', facebookAuthRoutes);
 app.use('/api/post', postRoutes);
-app.use('/api/scheduled-posts', scheduledPostsRoutes); // ✅ AQUÍ
+app.use('/api/scheduled-posts', scheduledPostsRoutes);
 
 // Error handler
 app.use((err, req, res, next) => {

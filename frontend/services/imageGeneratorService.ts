@@ -68,9 +68,9 @@ export const createSocialImage = async (
   // Reemplaza los valores de abajo con tus credenciales reales de HCTI.
   // FIX: Explicitly type userId as a string. This prevents TypeScript from inferring a literal type,
   // which causes an error when comparing it to a different placeholder string.
-  const userId: string = "5df328f2-b21a-466c-ad02-5ebab370627d";
+  const userId: string = "a5ed4716-ffcf-4ac2-b2dd-e20540303ba3";
   // FIX: Explicitly type apiKey as a string for the same reason as userId.
-  const apiKey: string = "b1640222-f0ee-4183-92c2-806a9e8037b2";
+  const apiKey: string = "1c51b53b-8a21-45fc-928b-16c282ae808b";
   // --- --- --- --- ---
 
   if (!userId || !apiKey || userId === "TU_USER_ID" || apiKey === "TU_API_KEY") {

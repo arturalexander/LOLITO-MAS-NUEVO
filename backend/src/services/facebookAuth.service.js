@@ -38,16 +38,100 @@ class FacebookAuthService {
   }
 
   static async getUserPages(accessToken) {
+  try {
+    console.log('[FB-AUTH] 📄 Getting pages...');
+    
+    let allPages = [];
+
+    // MÉTODO 1: Páginas personales (/me/accounts)
     try {
-      const response = await axios.get(`${FB_GRAPH_URL}/me/accounts`, {
-        params: { access_token: accessToken },
+      const accountsResponse = await axios.get(`${FB_GRAPH_URL}/me/accounts`, {
+        params: { 
+          access_token: accessToken,
+          fields: 'id,name,access_token,instagram_business_account{id,username}',
+          limit: 100
+        },
       });
-      return response.data.data || [];
+      
+      const personalPages = accountsResponse.data.data || [];
+      console.log('[FB-AUTH] ✅ Found', personalPages.length, 'personal pages');
+      allPages = allPages.concat(personalPages);
     } catch (error) {
-      console.error('Error fetching pages:', error.response?.data || error.message);
-      throw new Error('Failed to fetch Facebook pages');
+      console.warn('[FB-AUTH] ⚠️ Could not get personal pages:', error.response?.data?.error?.message);
     }
+
+    // MÉTODO 2: Páginas en Business Manager
+    try {
+      const businessesResponse = await axios.get(`${FB_GRAPH_URL}/me/businesses`, {
+        params: {
+          access_token: accessToken,
+          fields: 'id,name',
+          limit: 100
+        }
+      });
+
+      const businesses = businessesResponse.data.data || [];
+      console.log('[FB-AUTH] 📊 Found', businesses.length, 'businesses');
+
+      // Para cada Business Manager, obtener sus páginas
+      for (const business of businesses) {
+        console.log('[FB-AUTH] 🔍 Getting pages for business:', business.name);
+        
+        // Intentar obtener owned_pages
+        try {
+          const ownedPagesResponse = await axios.get(`${FB_GRAPH_URL}/${business.id}/owned_pages`, {
+            params: {
+              access_token: accessToken,
+              fields: 'id,name,access_token,instagram_business_account{id,username}',
+              limit: 100
+            }
+          });
+          
+          const ownedPages = ownedPagesResponse.data.data || [];
+          console.log('[FB-AUTH] ✅ Found', ownedPages.length, 'owned pages in', business.name);
+          allPages = allPages.concat(ownedPages);
+        } catch (error) {
+          console.warn('[FB-AUTH] ⚠️ Could not get owned pages for', business.name);
+        }
+
+        // Intentar obtener client_pages
+        try {
+          const clientPagesResponse = await axios.get(`${FB_GRAPH_URL}/${business.id}/client_pages`, {
+            params: {
+              access_token: accessToken,
+              fields: 'id,name,access_token,instagram_business_account{id,username}',
+              limit: 100
+            }
+          });
+          
+          const clientPages = clientPagesResponse.data.data || [];
+          console.log('[FB-AUTH] ✅ Found', clientPages.length, 'client pages in', business.name);
+          allPages = allPages.concat(clientPages);
+        } catch (error) {
+          console.warn('[FB-AUTH] ⚠️ Could not get client pages for', business.name);
+        }
+      }
+    } catch (error) {
+      console.warn('[FB-AUTH] ⚠️ Could not get businesses:', error.response?.data?.error?.message);
+    }
+
+    // Eliminar duplicados
+    const uniquePages = allPages.filter((page, index, self) =>
+      index === self.findIndex((p) => p.id === page.id)
+    );
+
+    console.log('[FB-AUTH] 🎯 Total unique pages:', uniquePages.length);
+
+    if (uniquePages.length === 0) {
+      console.error('[FB-AUTH] ❌ No pages found with any method');
+    }
+
+    return uniquePages;
+  } catch (error) {
+    console.error('[FB-AUTH] ❌ Error fetching pages:', error.response?.data || error.message);
+    throw new Error('Failed to fetch Facebook pages');
   }
+}
 
   static async getInstagramAccount(pageId, pageAccessToken) {
     try {

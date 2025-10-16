@@ -14,7 +14,7 @@ import { ShortSummaryDisplay } from './components/ShortSummaryDisplay';
 import { SummarySkeleton } from './components/SummarySkeleton';
 import { SocialImageDisplay } from './components/SocialImageDisplay';
 import { SocialImageSkeleton } from './components/SocialImageSkeleton';
-import { FacebookPublisher } from './components/FacebookPublisher';
+import { SocialMediaPublisher } from './components/SocialMediaPublisher';
 import { PostService } from './services/postService';
 import { uploadBase64Image } from './services/imageUploadService';
 
@@ -301,12 +301,12 @@ const MainApp: React.FC = () => {
               <div className="space-y-10">
                 {socialPost && (
                   <>
-                    <FacebookPublisher
-                      socialPost={socialPost}
-                      socialImageUrl={socialImageUrl}
-                      imageUrls={imageUrls}
-                      brandImage={user?.brandImageUrl || null}
-                    />
+                    <SocialMediaPublisher
+  socialPost={socialPost}
+  socialImageUrl={socialImageUrl}
+  imageUrls={imageUrls}
+  brandImage={user?.brandImageUrl || null}
+/>
                     
                     {isAutoPublishing && (
                       <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-lg">
